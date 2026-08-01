@@ -66,21 +66,19 @@ let pendingTotalTokens = 0;
 
 // Initialize Application
 async function initApp() {
-  // Reset token count on fresh load
   rifEngine.tokenCount = 0;
   rifEngine.activePack = null;
   activeKpCard.style.display = 'none';
 
+  // Force RAM Dashboard update immediately
   updateRamDashboard();
 
-  // Register PWA Service Worker
   if ('serviceWorker' in navigator) {
     try {
       await navigator.serviceWorker.register('/sw.js');
     } catch (e) {}
   }
 
-  // Check WebGPU & Load Model
   const gpuStatus = await modelRunner.checkWebGpuSupport();
   if (gpuStatus.supported) {
     gpuInfoText.innerHTML = `⚡ <strong>WebGPU Active:</strong> ${gpuStatus.adapterInfo.vendor || 'Local GPU'}`;
@@ -93,6 +91,7 @@ async function initApp() {
     updateRamDashboard();
   } catch (err) {
     console.error("Model load error:", err);
+    updateRamDashboard();
   }
 }
 
@@ -100,7 +99,7 @@ async function initApp() {
  * Updates Header RAM Dashboard & Live 3M Token Capacity
  */
 function updateRamDashboard() {
-  const stats = rifEngine.getLiveMemoryStats(modelRunner.isLoaded, 350.0);
+  const stats = rifEngine.getLiveMemoryStats(true, 350.0);
   
   qwenRamVal.textContent = `${stats.qwenRamMb} MB`;
   rifRamVal.textContent = `${stats.rifRamMb} MB`;
@@ -128,7 +127,6 @@ closeNewChatModalBtn.addEventListener('click', () => {
 });
 
 saveAndNewChatBtn.addEventListener('click', () => {
-  // Export Chat as .kp
   const result = rifEngine.exportChatSessionKp(conversationHistory);
   const url = URL.createObjectURL(result.blob);
   const a = document.createElement('a');
@@ -150,7 +148,6 @@ function resetChatSession() {
   conversationHistory = [];
   rifEngine.tokenCount = rifEngine.activePack ? rifEngine.activePack.metadata.tokenCount : 0;
   
-  // Clear Messages UI
   chatMessages.innerHTML = `
     <div class="message-row">
       <div class="avatar assistant">K</div>
@@ -340,9 +337,11 @@ async function handleSend() {
 
     conversationHistory.push({ role: 'assistant', content: assistantBubble.innerText });
   } catch (err) {
+    console.error("Inference execution error:", err);
     assistantBubble.innerHTML = `<span style="color: var(--accent-rose);">Error: ${err.message}</span>`;
   } finally {
     sendBtn.disabled = false;
+    updateRamDashboard();
   }
 }
 
