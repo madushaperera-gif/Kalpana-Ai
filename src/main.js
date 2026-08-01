@@ -209,7 +209,7 @@ function setupSpeechRecognition() {
   recognition.onend = () => {
     isListening = false;
     micBtn.classList.remove('listening');
-    userInput.placeholder = "Ask Kalpanā anything (Local WebGPU + 3M Token RIF Bounded Context)...";
+    userInput.placeholder = "Ask Kalpanā anything...";
   };
 
   recognition.onerror = (e) => {
