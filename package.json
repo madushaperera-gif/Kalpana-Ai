@@ -6,13 +6,15 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "vite build && gh-pages -d dist"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.78",
     "pdfjs-dist": "^3.11.174"
   },
   "devDependencies": {
+    "gh-pages": "^6.1.1",
     "vite": "^5.4.0"
   }
 }
