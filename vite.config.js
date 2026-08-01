@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: './',
+  base: '/Kalpana-Ai/',
   server: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
