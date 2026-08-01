@@ -321,6 +321,78 @@ body {
   100% { box-shadow: 0 0 0 0 rgba(255, 143, 143, 0); }
 }
 
+/* Global Reach Card & Privacy Badge Styles */
+.global-reach-card {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.reach-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.online-indicator {
+  color: var(--accent-lime);
+  font-size: 9px;
+}
+
+.reach-metrics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reach-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.reach-val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent-cyan);
+}
+
+.reach-lbl {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.privacy-badge-btn {
+  width: 100%;
+  background: rgba(222, 255, 154, 0.06);
+  border: 1px solid rgba(222, 255, 154, 0.25);
+  color: var(--accent-lime);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  transition: all 0.2s ease;
+}
+
+.privacy-badge-btn:hover {
+  background: rgba(222, 255, 154, 0.15);
+  box-shadow: 0 0 10px rgba(222, 255, 154, 0.2);
+}
+
 /* Install PWA Button Styles */
 .install-pwa-btn {
   background: linear-gradient(135deg, rgba(102, 242, 255, 0.15), rgba(222, 255, 154, 0.15));
