@@ -3,7 +3,7 @@
  * Multi-PDF Knowledge Pack Compiler & Live 3M Token Capacity Tracker
  */
 
-import '/src/style.css';
+import './style.css';
 import { KalpanaRifEngine } from './rif-engine.js';
 import { QwenWebGpuRunner } from './model-runner.js';
 
@@ -67,38 +67,34 @@ let pendingTotalTokens = 0;
 
 // Initialize Application
 async function initApp() {
-  rifEngine.tokenCount = 0;
-  rifEngine.activePack = null;
-  activeKpCard.style.display = 'none';
-
-  updateRamDashboard();
-
-  // Active unregistration of old service workers to break cache traps
-  if ('serviceWorker' in navigator) {
-    try {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      for (const registration of registrations) {
-        await registration.unregister();
-        console.log('Cleared stale service worker registration');
-      }
-      await navigator.serviceWorker.register('/sw.js');
-    } catch (e) {
-      console.warn('Service worker refresh skipped:', e);
-    }
-  }
-
-  const gpuStatus = await modelRunner.checkWebGpuSupport();
-  if (gpuStatus.supported) {
-    gpuInfoText.innerHTML = `⚡ <strong>WebGPU Active:</strong> ${gpuStatus.adapterInfo.vendor || 'Local GPU'}`;
-  } else {
-    gpuInfoText.innerHTML = `⚠️ <strong>WASM Fallback:</strong> ${gpuStatus.reason}`;
-  }
-
   try {
+    rifEngine.tokenCount = 0;
+    rifEngine.activePack = null;
+    activeKpCard.style.display = 'none';
+
+    updateRamDashboard();
+
+    if ('serviceWorker' in navigator) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+        await navigator.serviceWorker.register('/sw.js');
+      } catch (e) {}
+    }
+
+    const gpuStatus = await modelRunner.checkWebGpuSupport();
+    if (gpuStatus.supported) {
+      gpuInfoText.innerHTML = `⚡ <strong>WebGPU Active:</strong> ${gpuStatus.adapterInfo.vendor || 'Local GPU'}`;
+    } else {
+      gpuInfoText.innerHTML = `⚠️ <strong>WASM Fallback:</strong> ${gpuStatus.reason}`;
+    }
+
     await modelRunner.loadModel();
     updateRamDashboard();
   } catch (err) {
-    console.error("Model load error:", err);
+    console.error("App startup initialization error:", err);
     updateRamDashboard();
   }
 }
@@ -107,16 +103,20 @@ async function initApp() {
  * Updates Header RAM Dashboard & Live 3M Token Capacity
  */
 function updateRamDashboard() {
-  const stats = rifEngine.getLiveMemoryStats(true, 350.0);
-  
-  qwenRamVal.textContent = `${stats.qwenRamMb} MB`;
-  rifRamVal.textContent = `${stats.rifRamMb} MB`;
-  rifTokenCapacity.textContent = `${stats.formattedTokenCount} / 3,000,000 Tokens`;
-  rifTokenPercent.textContent = `${stats.capacityPct}% Capacity`;
-  
-  totalRamVal.textContent = `${stats.totalAppRamMb} MB`;
-  tradKvVal.textContent = `${stats.standardKvMb} MB`;
-  savingsBadge.textContent = `⚡ ${stats.memorySavingsPct}% RAM Saved`;
+  try {
+    const stats = rifEngine.getLiveMemoryStats(true, 350.0);
+    
+    if (qwenRamVal) qwenRamVal.textContent = `${stats.qwenRamMb} MB`;
+    if (rifRamVal) rifRamVal.textContent = `${stats.rifRamMb} MB`;
+    if (rifTokenCapacity) rifTokenCapacity.textContent = `${stats.formattedTokenCount} / 3,000,000 Tokens`;
+    if (rifTokenPercent) rifTokenPercent.textContent = `${stats.capacityPct}% Capacity`;
+    
+    if (totalRamVal) totalRamVal.textContent = `${stats.totalAppRamMb} MB`;
+    if (tradKvVal) tradKvVal.textContent = `${stats.standardKvMb} MB`;
+    if (savingsBadge) savingsBadge.textContent = `⚡ ${stats.memorySavingsPct}% RAM Saved`;
+  } catch (err) {
+    console.error("Error updating RAM dashboard:", err);
+  }
 }
 
 /**
@@ -346,7 +346,7 @@ async function handleSend() {
       rifEngine
     );
 
-    if (responseText && assistantBubble.innerText.includes('Processing')) {
+    if (responseText && (assistantBubble.innerHTML.includes('fa-spinner') || assistantBubble.innerText.includes('Processing'))) {
       assistantBubble.innerHTML = formatMarkdown(responseText);
     }
 
@@ -386,25 +386,13 @@ function appendMessage(role, content) {
   return bubble;
 }
 
-// Event Listeners for Form Submit, Click, and Enter Key
+// Single Form Submit listener (handles both button click and Enter key keydown cleanly)
 if (chatForm) {
   chatForm.addEventListener('submit', (e) => {
     e.preventDefault();
     handleSend();
   });
 }
-
-sendBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  handleSend();
-});
-
-userInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    handleSend();
-  }
-});
 
 function escapeHtml(text) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
