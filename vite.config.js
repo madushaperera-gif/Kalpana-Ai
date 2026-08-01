@@ -8,6 +8,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['@mlc-ai/web-llm'],
+    exclude: ['@mlc-ai/web-llm', 'pdfjs-dist'],
+  },
+  build: {
+    sourcemap: false,
   },
 });

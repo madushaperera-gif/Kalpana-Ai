@@ -2,10 +2,10 @@
  * Kalpanā RIF Engine — Multi-Document Knowledge Pack Compiler & 3M Token Tracker
  */
 
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Set worker src for pdfjs
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Use global pdfjsLib from window
+const getPdfjsLib = () => {
+  return window.pdfjsLib || null;
+};
 
 export class KalpanaRifEngine {
   constructor(options = {}) {
@@ -141,7 +141,12 @@ export class KalpanaRifEngine {
   async _extractTextFromPdf(file) {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const lib = getPdfjsLib();
+      if (!lib) {
+        console.warn("PDF.js library not yet loaded in window.");
+        return `[PDF Document: ${file.name}]`;
+      }
+      const pdf = await lib.getDocument({ data: arrayBuffer }).promise;
       let fullPdfText = "";
 
       for (let i = 1; i <= pdf.numPages; i++) {
