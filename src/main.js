@@ -67,6 +67,13 @@ const closeNewChatModalBtn = document.getElementById('closeNewChatModalBtn');
 const saveAndNewChatBtn = document.getElementById('saveAndNewChatBtn');
 const discardAndNewChatBtn = document.getElementById('discardAndNewChatBtn');
 
+// DOM Elements — PWA Installation
+const headerInstallBtn = document.getElementById('headerInstallBtn');
+const sidebarInstallBtn = document.getElementById('sidebarInstallBtn');
+const installModalOverlay = document.getElementById('installModalOverlay');
+const closeInstallModalBtn = document.getElementById('closeInstallModalBtn');
+const confirmInstallPromptBtn = document.getElementById('confirmInstallPromptBtn');
+
 // State
 let conversationHistory = [];
 let pendingCompilerEntries = [];
@@ -74,6 +81,39 @@ let pendingTotalTokens = 0;
 let isReadAloudActive = true;
 let recognition = null;
 let isListening = false;
+let deferredPrompt = null;
+
+// PWA Install Event Handler
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('PWA Install prompt captured');
+});
+
+function handleAppInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted PWA installation');
+      }
+      deferredPrompt = null;
+    });
+  } else {
+    // Show iOS & desktop install modal
+    if (installModalOverlay) installModalOverlay.classList.add('active');
+  }
+}
+
+if (headerInstallBtn) headerInstallBtn.addEventListener('click', handleAppInstall);
+if (sidebarInstallBtn) sidebarInstallBtn.addEventListener('click', handleAppInstall);
+if (confirmInstallPromptBtn) confirmInstallPromptBtn.addEventListener('click', handleAppInstall);
+
+if (closeInstallModalBtn) {
+  closeInstallModalBtn.addEventListener('click', () => {
+    installModalOverlay.classList.remove('active');
+  });
+}
 
 // Initialize Application
 async function initApp() {

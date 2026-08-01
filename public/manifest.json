@@ -1,21 +1,24 @@
 {
-  "name": "Kalpanā AI — Local On-Device WebGPU",
+  "name": "Kalpanā AI — Run 3M Tokens On Any Device",
   "short_name": "Kalpanā AI",
   "description": "On-Device WebGPU LLM Inference with Bounded 6.3 MB Kalpanā RIF Context Memory",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#66f2ff",
+  "background_color": "#060913",
+  "theme_color": "#060913",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "assets/icon-192.png",
+      "src": "/assets/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/icon-512.png",
+      "src": "/assets/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
