@@ -200,6 +200,7 @@ function handleAppInstall() {
         console.log('User accepted PWA installation');
       }
       deferredPrompt = null;
+      if (installModalOverlay) installModalOverlay.classList.remove('active');
     });
   } else {
     if (installModalOverlay) installModalOverlay.classList.add('active');
@@ -207,7 +208,21 @@ function handleAppInstall() {
 }
 
 if (headerInstallBtn) headerInstallBtn.addEventListener('click', handleAppInstall);
-if (confirmInstallPromptBtn) confirmInstallPromptBtn.addEventListener('click', handleAppInstall);
+
+if (confirmInstallPromptBtn) {
+  confirmInstallPromptBtn.addEventListener('click', () => {
+    recordDownloadMetric();
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(() => {
+        deferredPrompt = null;
+        if (installModalOverlay) installModalOverlay.classList.remove('active');
+      });
+    } else {
+      if (installModalOverlay) installModalOverlay.classList.remove('active');
+    }
+  });
+}
 
 if (closeInstallModalBtn) {
   closeInstallModalBtn.addEventListener('click', () => {
@@ -228,12 +243,10 @@ async function initApp() {
 
     if ('serviceWorker' in navigator) {
       try {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (const registration of registrations) {
-          await registration.unregister();
-        }
-        await navigator.serviceWorker.register('/sw.js');
-      } catch (e) {}
+        await navigator.serviceWorker.register('sw.js');
+      } catch (e) {
+        console.log('Service worker registration:', e);
+      }
     }
 
     const gpuStatus = await modelRunner.checkWebGpuSupport();
