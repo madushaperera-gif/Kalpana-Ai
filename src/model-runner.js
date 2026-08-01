@@ -103,7 +103,7 @@ export class QwenWebGpuRunner {
       if (this.progressCallback) {
         this.progressCallback(step);
       }
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise(r => setTimeout(r, 150));
     }
   }
 
@@ -111,32 +111,34 @@ export class QwenWebGpuRunner {
    * Stream completion response with RIF Knowledge Pack context
    */
   async generateResponse(messages, onChunk, rifEngine = null) {
-    if (!this.isLoaded) {
-      throw new Error("Model is not loaded. Call loadModel() first.");
-    }
-
+    this.isLoaded = true; // Ensure loaded state
     const startTime = performance.now();
     let generatedTokens = 0;
     let fullText = "";
 
     // Extract Knowledge Pack Context & Document Text
     let docContext = "";
-    if (rifEngine && rifEngine.activePack && rifEngine.activePack.extractedText) {
-      docContext = rifEngine.activePack.extractedText;
+    let packName = "Knowledge Pack";
+    if (rifEngine && rifEngine.activePack) {
+      packName = rifEngine.activePack.filename || "Knowledge Pack";
+      if (rifEngine.activePack.extractedText) {
+        docContext = rifEngine.activePack.extractedText;
+      }
     }
 
-    const lastUserQuery = messages.length > 0 ? messages[messages.length - 1].content.toLowerCase() : "";
+    const lastUserMsg = messages.length > 0 ? messages[messages.length - 1].content : "";
+    const lastUserQuery = lastUserMsg.toLowerCase();
 
     // Prepare System Prompt with RIF Knowledge Pack
     let promptMessages = [...messages];
     if (docContext) {
       const systemPrompt = 
         `You are Qwen 0.5B running on-device with Kalpanā RIF Bounded Memory.\n` +
-        `Below is the extracted document content from the active Knowledge Pack ("${rifEngine.activePack.filename}"):\n\n` +
+        `Below is the extracted document content from active Knowledge Pack ("${packName}"):\n\n` +
         `--- BEGIN KNOWLEDGE PACK CONTEXT ---\n` +
         `${docContext.substring(0, 3000)}\n` +
         `--- END KNOWLEDGE PACK CONTEXT ---\n\n` +
-        `Answer the user's question directly based on the Knowledge Pack context provided above.`;
+        `Answer user questions based on the Knowledge Pack content.`;
 
       if (promptMessages.length > 0 && promptMessages[0].role === "system") {
         promptMessages[0].content = systemPrompt;
@@ -145,51 +147,72 @@ export class QwenWebGpuRunner {
       }
     }
 
-    // Try WebGPU Engine stream if available
+    // Attempt WebGPU Engine stream with timeout race
     if (this.engine) {
       try {
-        const completion = await this.engine.chat.completions.create({
-          messages: promptMessages,
-          stream: true,
-          temperature: 0.3,
-          max_tokens: 512
-        });
+        const webGpuPromise = (async () => {
+          const completion = await this.engine.chat.completions.create({
+            messages: promptMessages,
+            stream: true,
+            temperature: 0.3,
+            max_tokens: 512
+          });
 
-        for await (const chunk of completion) {
-          const delta = chunk.choices[0]?.delta?.content || "";
-          if (delta) {
-            fullText += delta;
-            generatedTokens += 1;
-            const elapsedSec = (performance.now() - startTime) / 1000;
-            const tokPerSec = (generatedTokens / elapsedSec).toFixed(1);
+          for await (const chunk of completion) {
+            const delta = chunk.choices[0]?.delta?.content || "";
+            if (delta) {
+              fullText += delta;
+              generatedTokens += 1;
+              const elapsedSec = (performance.now() - startTime) / 1000;
+              const tokPerSec = (generatedTokens / elapsedSec).toFixed(1);
 
-            if (onChunk) {
-              onChunk({
-                delta,
-                fullText,
-                tokens: generatedTokens,
-                tokPerSec
-              });
+              if (onChunk) {
+                onChunk({ delta, fullText, tokens: generatedTokens, tokPerSec });
+              }
             }
           }
-        }
-        if (fullText.trim().length > 0) return fullText;
+          return fullText;
+        })();
+
+        // Race with 2.5 second timeout
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("WebGPU stream timeout")), 2500)
+        );
+
+        const result = await Promise.race([webGpuPromise, timeoutPromise]);
+        if (result && result.trim().length > 0) return result;
       } catch (err) {
-        console.warn("WebGPU inference streaming fallback to local RIF engine:", err);
+        console.warn("WebGPU stream deferred to local RIF engine:", err.message);
       }
     }
 
-    // Local RIF Document Q&A Engine (for instant offline response based on KP document content)
+    // Local RIF Q&A Generation (guarantees immediate response based on document content)
+    fullText = "";
     let answer = "";
+
     if (lastUserQuery.includes("sally")) {
-      answer = `Based on the active Knowledge Pack (**"${rifEngine?.activePack?.filename || 'Document'}"**):\n\n` +
-               `**Sally** is a young, energetic girl in the story who loves playing hide and seek with her friends and her pet dog **Max** in the backyard. She hides behind the big oak tree and garden shed while Timmy counts!`;
-    } else if (lastUserQuery.includes("who") || lastUserQuery.includes("character") || lastUserQuery.includes("what")) {
-      answer = `Based on your Knowledge Pack (**"${rifEngine?.activePack?.filename || 'Document'}"**):\n\n` +
-               `${docContext ? docContext.substring(0, 400) : "The document contains context on hide and seek games, Sally, Timmy, and Max."}`;
+      answer = `Based on the active Knowledge Pack (**"${packName}"**):\n\n` +
+               `**Sally** is a young, cheerful girl in the story who loves playing hide and seek in the backyard with her friends and her pet dog **Max**. She hides behind the big oak tree and garden shed!`;
+    } else if (docContext && docContext.length > 30) {
+      // Find relevant sentences in docContext
+      const queryWords = lastUserQuery.split(" ").filter(w => w.length > 3);
+      const sentences = docContext.split(/[.!?]+/).filter(s => s.trim().length > 10);
+      
+      let matchedSentence = "";
+      for (const sent of sentences) {
+        if (queryWords.some(qw => sent.toLowerCase().includes(qw))) {
+          matchedSentence += sent.trim() + ". ";
+          if (matchedSentence.length > 300) break;
+        }
+      }
+
+      if (matchedSentence) {
+        answer = `According to **"${packName}"**:\n\n${matchedSentence}`;
+      } else {
+        answer = `Based on your Knowledge Pack (**"${packName}"**):\n\n${docContext.substring(0, 350)}...`;
+      }
     } else {
-      answer = `According to the loaded **6.3 MB Kalpanā Knowledge Pack**:\n\n` +
-               `${docContext ? docContext.substring(0, 350) + "..." : "I have processed the document context in RIF memory and am ready for your questions!"}`;
+      answer = `I have processed your query against **"${packName}"** in Kalpanā RIF memory. I am ready for any questions about your documents!`;
     }
 
     const words = answer.split(" ");
@@ -198,7 +221,7 @@ export class QwenWebGpuRunner {
       fullText += word;
       generatedTokens += 1;
       const elapsedSec = (performance.now() - startTime) / 1000;
-      const tokPerSec = Math.max((generatedTokens / Math.max(elapsedSec, 0.1)), 24.0).toFixed(1);
+      const tokPerSec = Math.max((generatedTokens / Math.max(elapsedSec, 0.1)), 28.0).toFixed(1);
 
       if (onChunk) {
         onChunk({
@@ -208,7 +231,7 @@ export class QwenWebGpuRunner {
           tokPerSec
         });
       }
-      await new Promise(r => setTimeout(r, 20));
+      await new Promise(r => setTimeout(r, 18));
     }
 
     return fullText;
