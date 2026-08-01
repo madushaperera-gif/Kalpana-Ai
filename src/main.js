@@ -310,10 +310,12 @@ function resetChatSession() {
   
   chatMessages.innerHTML = `
     <div class="message-row">
-      <div class="avatar assistant">K</div>
+      <div class="avatar assistant">
+        <img src="/assets/icon-192.png" style="width:20px;height:20px;border-radius:4px;object-fit:cover;" alt="Kalpanā">
+      </div>
       <div class="bubble">
         Started a <strong>New Chat Session</strong>! Context memory has been reset.<br><br>
-        Notice the header bar above: <strong>Qwen Model RAM (350.0 MB)</strong> and <strong>Kalpanā RIF State (6.3 MB)</strong> stay fixed as you chat up to <strong>3 Million Tokens</strong>!
+        You can now run up to <strong>3 Million Tokens</strong> on any device. After hitting 3M tokens, you can continue chatting seamlessly, though Kalpanā may start to gradually fade older context details. Whenever needed, simply export your session as a <strong>6.3 MB .kp Knowledge Pack</strong> and start a brand-new 3M token conversation anytime!
       </div>
     </div>
   `;
