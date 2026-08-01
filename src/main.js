@@ -73,10 +73,18 @@ async function initApp() {
 
   updateRamDashboard();
 
+  // Active unregistration of old service workers to break cache traps
   if ('serviceWorker' in navigator) {
     try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+        console.log('Cleared stale service worker registration');
+      }
       await navigator.serviceWorker.register('/sw.js');
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Service worker refresh skipped:', e);
+    }
   }
 
   const gpuStatus = await modelRunner.checkWebGpuSupport();
