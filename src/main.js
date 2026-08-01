@@ -24,6 +24,7 @@ const savingsBadge = document.getElementById('savingsBadge');
 const chatMessages = document.getElementById('chatMessages');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
+const newChatBtn = document.getElementById('newChatBtn');
 
 // DOM Elements — Sidebar & Single Dropzone
 const kpDropzone = document.getElementById('kpDropzone');
@@ -31,6 +32,7 @@ const kpFileInput = document.getElementById('kpFileInput');
 const activeKpCard = document.getElementById('activeKpCard');
 const kpTitle = document.getElementById('kpTitle');
 const kpMeta = document.getElementById('kpMeta');
+const unloadKpBtn = document.getElementById('unloadKpBtn');
 const gpuInfoText = document.getElementById('gpuInfoText');
 
 // DOM Elements — Multi-PDF Compiler Modal
@@ -51,6 +53,12 @@ const compilerTokensRemaining = document.getElementById('compilerTokensRemaining
 const kpOutputTitle = document.getElementById('kpOutputTitle');
 const compileAndLoadBtn = document.getElementById('compileAndLoadBtn');
 
+// DOM Elements — New Chat Save Modal
+const newChatModalOverlay = document.getElementById('newChatModalOverlay');
+const closeNewChatModalBtn = document.getElementById('closeNewChatModalBtn');
+const saveAndNewChatBtn = document.getElementById('saveAndNewChatBtn');
+const discardAndNewChatBtn = document.getElementById('discardAndNewChatBtn');
+
 // State
 let conversationHistory = [];
 let pendingCompilerEntries = [];
@@ -58,6 +66,11 @@ let pendingTotalTokens = 0;
 
 // Initialize Application
 async function initApp() {
+  // Reset token count on fresh load
+  rifEngine.tokenCount = 0;
+  rifEngine.activePack = null;
+  activeKpCard.style.display = 'none';
+
   updateRamDashboard();
 
   // Register PWA Service Worker
@@ -81,11 +94,6 @@ async function initApp() {
   } catch (err) {
     console.error("Model load error:", err);
   }
-
-  // Default Demo Knowledge Pack
-  const sample = rifEngine.generateSampleKp();
-  rifEngine.loadKnowledgePack(await sample.blob.arrayBuffer());
-  updateRamDashboard();
 }
 
 /**
@@ -105,7 +113,69 @@ function updateRamDashboard() {
 }
 
 /**
- * Multi-PDF Compiler Modal Open / Close Handlers
+ * New Chat / Delete Conversation Handlers with Save Prompt
+ */
+newChatBtn.addEventListener('click', () => {
+  if (conversationHistory.length > 0) {
+    newChatModalOverlay.classList.add('active');
+  } else {
+    resetChatSession();
+  }
+});
+
+closeNewChatModalBtn.addEventListener('click', () => {
+  newChatModalOverlay.classList.remove('active');
+});
+
+saveAndNewChatBtn.addEventListener('click', () => {
+  // Export Chat as .kp
+  const result = rifEngine.exportChatSessionKp(conversationHistory);
+  const url = URL.createObjectURL(result.blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = result.filename;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  newChatModalOverlay.classList.remove('active');
+  resetChatSession();
+});
+
+discardAndNewChatBtn.addEventListener('click', () => {
+  newChatModalOverlay.classList.remove('active');
+  resetChatSession();
+});
+
+function resetChatSession() {
+  conversationHistory = [];
+  rifEngine.tokenCount = rifEngine.activePack ? rifEngine.activePack.metadata.tokenCount : 0;
+  
+  // Clear Messages UI
+  chatMessages.innerHTML = `
+    <div class="message-row">
+      <div class="avatar assistant">K</div>
+      <div class="bubble">
+        Started a <strong>New Chat Session</strong>! Context memory has been reset.<br><br>
+        Notice the header bar above: <strong>Qwen Model RAM (350.0 MB)</strong> and <strong>Kalpanā RIF State (6.3 MB)</strong> stay fixed as you chat up to <strong>3 Million Tokens</strong>!
+      </div>
+    </div>
+  `;
+
+  updateRamDashboard();
+}
+
+/**
+ * Unload Active Knowledge Pack
+ */
+unloadKpBtn.addEventListener('click', () => {
+  rifEngine.activePack = null;
+  rifEngine.tokenCount = 0;
+  activeKpCard.style.display = 'none';
+  updateRamDashboard();
+});
+
+/**
+ * Multi-PDF Compiler Modal Handlers
  */
 openCompilerModalBtn.addEventListener('click', () => {
   compilerModalOverlay.classList.add('active');
@@ -121,9 +191,6 @@ compilerModalOverlay.addEventListener('click', (e) => {
   }
 });
 
-/**
- * Multi-File Selection & Token Capacity Gauge Update
- */
 multiPdfDropzone.addEventListener('click', () => multiFileInput.click());
 
 multiFileInput.addEventListener('change', async (e) => {
@@ -139,14 +206,12 @@ async function handleMultiFileSelection(files) {
   pendingCompilerEntries = result.entries;
   pendingTotalTokens = result.totalEstimatedTokens;
 
-  // Restore Dropzone text
   multiPdfDropzone.innerHTML = `
     <i class="fa-solid fa-folder-open" style="font-size: 32px; color: var(--accent-lime); margin-bottom: 8px;"></i>
     <div style="font-size: 13px; font-weight: 700;">Select Multiple PDF / Text Files</div>
     <div style="font-size: 11px; color: var(--text-muted);">Hold Ctrl/Cmd or Shift to select multiple files at once</div>
   `;
 
-  // Render Selected Files List
   selectedFileCount.textContent = pendingCompilerEntries.length;
   selectedFilesList.innerHTML = pendingCompilerEntries.map(e => `
     <div class="selected-file-item">
@@ -155,7 +220,6 @@ async function handleMultiFileSelection(files) {
     </div>
   `).join('');
 
-  // Update Live 3M Token Capacity Gauge
   const pct = Math.min(Math.round((pendingTotalTokens / 3000000) * 1000) / 10, 100);
   compilerGaugePct.textContent = `${pendingTotalTokens.toLocaleString()} / 3,000,000 Tokens (${pct}%)`;
   compilerGaugeFill.style.width = `${pct}%`;
@@ -173,9 +237,6 @@ async function handleMultiFileSelection(files) {
   }
 }
 
-/**
- * Compile Multi-Doc Knowledge Pack & Load into Active RIF Memory
- */
 compileAndLoadBtn.addEventListener('click', () => {
   if (pendingCompilerEntries.length === 0) {
     alert("Please select at least one PDF or document file to compile!");
@@ -185,7 +246,6 @@ compileAndLoadBtn.addEventListener('click', () => {
   const title = kpOutputTitle.value.trim() || "My_MultiDoc_Knowledge_Pack";
   const result = rifEngine.compileMultiDocKp(title, pendingCompilerEntries, pendingTotalTokens);
   
-  // Download compiled .kp file
   const url = URL.createObjectURL(result.blob);
   const a = document.createElement('a');
   a.href = url;
@@ -193,7 +253,7 @@ compileAndLoadBtn.addEventListener('click', () => {
   a.click();
   URL.revokeObjectURL(url);
 
-  // Update Active KP Card
+  activeKpCard.style.display = 'flex';
   kpTitle.textContent = result.pack.filename;
   kpMeta.textContent = `${result.pack.metadata.docCount} Docs · ${result.pack.metadata.tokenCount.toLocaleString()} Tokens · Bounded 6.3 MB`;
 
@@ -204,7 +264,7 @@ compileAndLoadBtn.addEventListener('click', () => {
 });
 
 /**
- * Export Active Chat Session into a 6.3 MB .kp Knowledge Pack File
+ * Export Chat Session
  */
 exportChatKpBtn.addEventListener('click', () => {
   if (conversationHistory.length === 0) {
@@ -221,7 +281,7 @@ exportChatKpBtn.addEventListener('click', () => {
   a.click();
   URL.revokeObjectURL(url);
 
-  appendMessage('assistant', `📦 Exported full chat session context (${result.tokenCount.toLocaleString()} Tokens) into **"${result.filename}"** (6.3 MB Fixed State Knowledge Pack). You can share or reload this .kp file anytime!`);
+  appendMessage('assistant', `📦 Exported full chat session context (${result.tokenCount.toLocaleString()} Tokens) into **"${result.filename}"** (6.3 MB Fixed State Knowledge Pack).`);
 });
 
 /**
@@ -238,6 +298,7 @@ kpFileInput.addEventListener('change', async (e) => {
 async function processSingleFile(file) {
   try {
     const pack = await rifEngine.loadKnowledgePack(file);
+    activeKpCard.style.display = 'flex';
     kpTitle.textContent = pack.filename;
     kpMeta.textContent = `${pack.metadata.tokenCount.toLocaleString()} Tokens · Bounded 6.3 MB Phase Index`;
     
@@ -261,7 +322,6 @@ async function handleSend() {
   appendMessage('user', text);
   conversationHistory.push({ role: 'user', content: text });
 
-  // Update RIF Token Capacity dynamically as chat grows
   rifEngine.addTokens(Math.floor(text.length / 4) + 150);
   updateRamDashboard();
 

@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <script type="module" crossorigin src="/assets/index-B9EYbjxX.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-rbJWvjAh.css">
+  <script type="module" crossorigin src="/assets/index-C0d533FB.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-B7OKzRFE.css">
 </head>
 <body>
 
@@ -43,15 +43,15 @@
 
       <div class="ram-metric">
         <span class="ram-label">RIF Chat Context (3M Max)</span>
-        <span class="ram-value total" id="rifTokenCapacity">1,500 / 3,000,000 Tokens</span>
-        <span class="capacity-sub" id="rifTokenPercent">0.1% Capacity</span>
+        <span class="ram-value total" id="rifTokenCapacity">0 / 3,000,000 Tokens</span>
+        <span class="capacity-sub" id="rifTokenPercent">0.0% Capacity</span>
       </div>
 
       <div class="divider"></div>
 
       <div class="ram-metric">
         <span class="ram-label">Standard KV (Trad)</span>
-        <span class="ram-value trad" id="tradKvVal">23.0 MB</span>
+        <span class="ram-value trad" id="tradKvVal">0.0 MB</span>
       </div>
 
       <div class="savings-badge" id="savingsBadge">
@@ -63,12 +63,17 @@
   <!-- Main Workspace -->
   <div class="app-container">
     
-    <!-- Sidebar: Knowledge Packs, Compiler & Export Buttons -->
+    <!-- Sidebar: Knowledge Packs, Compiler & New Chat Buttons -->
     <aside class="sidebar">
       <div class="sidebar-title">
         <span>Knowledge Packs (.kp)</span>
         <span style="font-size: 10px; color: var(--accent-lime);">6.3 MB Bounded</span>
       </div>
+
+      <!-- New Chat Button -->
+      <button class="new-chat-btn" id="newChatBtn">
+        <i class="fa-solid fa-plus"></i> New Chat Session
+      </button>
 
       <!-- Multi-PDF Compiler Trigger Button -->
       <button class="compile-trigger-btn" id="openCompilerModalBtn">
@@ -88,14 +93,14 @@
         <input type="file" id="kpFileInput" accept=".kp,.pdf,.txt,.md" style="display: none;" />
       </div>
 
-      <!-- Active Knowledge Pack Display -->
-      <div class="kp-card" id="activeKpCard">
+      <!-- Active Knowledge Pack Display (Hidden by default until pack is loaded) -->
+      <div class="kp-card" id="activeKpCard" style="display: none;">
         <div class="kp-card-header">
-          <span class="kp-title" id="kpTitle">3M_Token_Kalpana_Paper.kp</span>
-          <span class="kp-badge">ACTIVE</span>
+          <span class="kp-title" id="kpTitle">No Active Pack</span>
+          <button class="unload-kp-btn" id="unloadKpBtn" title="Unload Knowledge Pack">&times;</button>
         </div>
         <div class="kp-meta" id="kpMeta">
-          3,000,000 Tokens · Fixed 6.3 MB Phase Index
+          Default Chat Context · 6.3 MB Fixed State
         </div>
       </div>
 
@@ -149,7 +154,6 @@
       </div>
 
       <div class="modal-body">
-        <!-- Multi File Input Dropzone -->
         <div class="multi-dropzone" id="multiPdfDropzone">
           <i class="fa-solid fa-folder-open" style="font-size: 32px; color: var(--accent-lime); margin-bottom: 8px;"></i>
           <div style="font-size: 13px; font-weight: 700;">Select Multiple PDF / Text Files</div>
@@ -157,7 +161,6 @@
           <input type="file" id="multiFileInput" multiple accept=".pdf,.txt,.md,.json" style="display: none;" />
         </div>
 
-        <!-- Live 3M Token Capacity Gauge -->
         <div class="token-capacity-box">
           <div class="capacity-header">
             <span>3,000,000 TOKEN CAPACITY GAUGE</span>
@@ -172,13 +175,11 @@
           </div>
         </div>
 
-        <!-- Selected File List -->
         <div class="file-list-title">Selected Documents (<span id="selectedFileCount">0</span>)</div>
         <div class="selected-files-container" id="selectedFilesList">
           <div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 20px;">No files selected yet. Click above to add PDFs or document files.</div>
         </div>
 
-        <!-- Output Title Input -->
         <div style="margin-top: 14px;">
           <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">KNOWLEDGE PACK TITLE</label>
           <input type="text" id="kpOutputTitle" class="chat-input" style="width: 100%;" value="My_MultiDoc_Knowledge_Pack" />
@@ -188,6 +189,33 @@
       <div class="modal-footer">
         <button class="send-btn" id="compileAndLoadBtn" style="width: 100%; justify-content: center; background: linear-gradient(135deg, var(--accent-lime), var(--accent-cyan)); color: #000;">
           <i class="fa-solid fa-gears"></i> Compile & Load .kp Knowledge Pack (6.3 MB Fixed State)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW CHAT / SAVE PROMPT MODAL -->
+  <div class="modal-overlay" id="newChatModalOverlay">
+    <div class="compiler-modal" style="max-width: 480px;">
+      <div class="modal-header">
+        <div>
+          <h3 style="color: var(--accent-cyan); font-size: 16px;"><i class="fa-solid fa-circle-question" style="margin-right: 8px;"></i>Start New Chat Session?</h3>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Would you like to save your active conversation as a Knowledge Pack first?</div>
+        </div>
+        <button class="close-modal-btn" id="closeNewChatModalBtn">&times;</button>
+      </div>
+
+      <div class="modal-body" style="gap: 12px;">
+        <p style="font-size: 13px; color: var(--text-main); line-height: 1.5;">
+          You have an active chat session with context memory. You can export it as a <strong>6.3 MB .kp Knowledge Pack</strong> to reload or share later.
+        </p>
+
+        <button class="send-btn" id="saveAndNewChatBtn" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; width: 100%; justify-content: center;">
+          <i class="fa-solid fa-file-export"></i> Save as .kp & Start New Chat
+        </button>
+
+        <button class="send-btn" id="discardAndNewChatBtn" style="background: rgba(255, 143, 143, 0.15); border: 1px solid var(--accent-rose); color: var(--accent-rose); width: 100%; justify-content: center;">
+          <i class="fa-solid fa-trash-can"></i> Discard & Start New Chat
         </button>
       </div>
     </div>
