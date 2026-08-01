@@ -24,6 +24,7 @@ const savingsBadge = document.getElementById('savingsBadge');
 const chatMessages = document.getElementById('chatMessages');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
+const chatForm = document.getElementById('chatForm');
 const newChatBtn = document.getElementById('newChatBtn');
 
 // DOM Elements — Sidebar & Single Dropzone
@@ -70,7 +71,6 @@ async function initApp() {
   rifEngine.activePack = null;
   activeKpCard.style.display = 'none';
 
-  // Force RAM Dashboard update immediately
   updateRamDashboard();
 
   if ('serviceWorker' in navigator) {
@@ -307,10 +307,11 @@ async function processSingleFile(file) {
 }
 
 /**
- * Chat Messaging Handler
+ * Chat Messaging Handler (Form Submit & Click)
  */
 async function handleSend() {
-  const text = userInput.value.trim();
+  const rawText = userInput.value;
+  const text = rawText ? rawText.trim() : '';
   if (!text) return;
 
   userInput.value = '';
@@ -325,15 +326,21 @@ async function handleSend() {
   const assistantBubble = appendMessage('assistant', '<i class="fa-solid fa-spinner fa-spin"></i> Processing with WebGPU + RIF...');
 
   try {
-    await modelRunner.generateResponse(
+    const responseText = await modelRunner.generateResponse(
       conversationHistory,
       (chunk) => {
-        assistantBubble.innerHTML = formatMarkdown(chunk.fullText);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        updateRamDashboard();
+        if (chunk && chunk.fullText) {
+          assistantBubble.innerHTML = formatMarkdown(chunk.fullText);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+          updateRamDashboard();
+        }
       },
       rifEngine
     );
+
+    if (responseText && assistantBubble.innerText.includes('Processing')) {
+      assistantBubble.innerHTML = formatMarkdown(responseText);
+    }
 
     conversationHistory.push({ role: 'assistant', content: assistantBubble.innerText });
   } catch (err) {
@@ -341,6 +348,7 @@ async function handleSend() {
     assistantBubble.innerHTML = `<span style="color: var(--accent-rose);">Error: ${err.message}</span>`;
   } finally {
     sendBtn.disabled = false;
+    userInput.focus();
     updateRamDashboard();
   }
 }
@@ -370,10 +378,24 @@ function appendMessage(role, content) {
   return bubble;
 }
 
-// Listeners
-sendBtn.addEventListener('click', handleSend);
+// Event Listeners for Form Submit, Click, and Enter Key
+if (chatForm) {
+  chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleSend();
+  });
+}
+
+sendBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  handleSend();
+});
+
 userInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') handleSend();
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    handleSend();
+  }
 });
 
 function escapeHtml(text) {

@@ -70,17 +70,17 @@
       </div>
 
       <!-- New Chat Button -->
-      <button class="new-chat-btn" id="newChatBtn">
+      <button class="new-chat-btn" id="newChatBtn" type="button">
         <i class="fa-solid fa-plus"></i> New Chat Session
       </button>
 
       <!-- Multi-PDF Compiler Trigger Button -->
-      <button class="compile-trigger-btn" id="openCompilerModalBtn">
+      <button class="compile-trigger-btn" id="openCompilerModalBtn" type="button">
         <i class="fa-solid fa-file-pdf"></i> Compile Multi-PDF Knowledge Pack
       </button>
 
       <!-- Export Active Chat as .kp Button -->
-      <button class="export-chat-btn" id="exportChatKpBtn">
+      <button class="export-chat-btn" id="exportChatKpBtn" type="button">
         <i class="fa-solid fa-file-export"></i> Export Chat as .kp Pack (6.3 MB)
       </button>
 
@@ -96,7 +96,7 @@
       <div class="kp-card" id="activeKpCard" style="display: none;">
         <div class="kp-card-header">
           <span class="kp-title" id="kpTitle">No Active Pack</span>
-          <button class="unload-kp-btn" id="unloadKpBtn" title="Unload Knowledge Pack">&times;</button>
+          <button class="unload-kp-btn" id="unloadKpBtn" type="button" title="Unload Knowledge Pack">&times;</button>
         </div>
         <div class="kp-meta" id="kpMeta">
           Default Chat Context · 6.3 MB Fixed State
@@ -129,14 +129,14 @@
 
       </div>
 
-      <!-- Chat Input Controls -->
-      <div class="chat-input-bar">
-        <input type="text" class="chat-input" id="userInput" placeholder="Ask Qwen 0.5B anything (Local WebGPU + 3M Token RIF Bounded Context)..." />
-        <button class="send-btn" id="sendBtn">
+      <!-- Chat Input Form -->
+      <form class="chat-input-bar" id="chatForm" action="javascript:void(0);">
+        <input type="text" class="chat-input" id="userInput" placeholder="Ask Qwen 0.5B anything (Local WebGPU + 3M Token RIF Bounded Context)..." autocomplete="off" />
+        <button type="submit" class="send-btn" id="sendBtn">
           <span>Send</span>
           <i class="fa-solid fa-paper-plane"></i>
         </button>
-      </div>
+      </form>
     </main>
 
   </div>
@@ -149,7 +149,7 @@
           <h3 style="color: var(--accent-cyan); font-size: 16px;"><i class="fa-solid fa-file-pdf" style="margin-right: 8px;"></i>Multi-Document Knowledge Pack Compiler</h3>
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Combine multiple PDFs, TXT, or MD documents into a single 6.3 MB .kp Knowledge Pack</div>
         </div>
-        <button class="close-modal-btn" id="closeCompilerModalBtn">&times;</button>
+        <button class="close-modal-btn" id="closeCompilerModalBtn" type="button">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -186,7 +186,7 @@
       </div>
 
       <div class="modal-footer">
-        <button class="send-btn" id="compileAndLoadBtn" style="width: 100%; justify-content: center; background: linear-gradient(135deg, var(--accent-lime), var(--accent-cyan)); color: #000;">
+        <button class="send-btn" id="compileAndLoadBtn" type="button" style="width: 100%; justify-content: center; background: linear-gradient(135deg, var(--accent-lime), var(--accent-cyan)); color: #000;">
           <i class="fa-solid fa-gears"></i> Compile & Load .kp Knowledge Pack (6.3 MB Fixed State)
         </button>
       </div>
@@ -201,7 +201,7 @@
           <h3 style="color: var(--accent-cyan); font-size: 16px;"><i class="fa-solid fa-circle-question" style="margin-right: 8px;"></i>Start New Chat Session?</h3>
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Would you like to save your active conversation as a Knowledge Pack first?</div>
         </div>
-        <button class="close-modal-btn" id="closeNewChatModalBtn">&times;</button>
+        <button class="close-modal-btn" id="closeNewChatModalBtn" type="button">&times;</button>
       </div>
 
       <div class="modal-body" style="gap: 12px;">
@@ -209,11 +209,11 @@
           You have an active chat session with context memory. You can export it as a <strong>6.3 MB .kp Knowledge Pack</strong> to reload or share later.
         </p>
 
-        <button class="send-btn" id="saveAndNewChatBtn" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; width: 100%; justify-content: center;">
+        <button class="send-btn" id="saveAndNewChatBtn" type="button" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; width: 100%; justify-content: center;">
           <i class="fa-solid fa-file-export"></i> Save as .kp & Start New Chat
         </button>
 
-        <button class="send-btn" id="discardAndNewChatBtn" style="background: rgba(255, 143, 143, 0.15); border: 1px solid var(--accent-rose); color: var(--accent-rose); width: 100%; justify-content: center;">
+        <button class="send-btn" id="discardAndNewChatBtn" type="button" style="background: rgba(255, 143, 143, 0.15); border: 1px solid var(--accent-rose); color: var(--accent-rose); width: 100%; justify-content: center;">
           <i class="fa-solid fa-trash-can"></i> Discard & Start New Chat
         </button>
       </div>
