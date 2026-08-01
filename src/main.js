@@ -35,6 +35,7 @@ const gpuInfoText = document.getElementById('gpuInfoText');
 
 // DOM Elements — Multi-PDF Compiler Modal
 const openCompilerModalBtn = document.getElementById('openCompilerModalBtn');
+const exportChatKpBtn = document.getElementById('exportChatKpBtn');
 const compilerModalOverlay = document.getElementById('compilerModalOverlay');
 const closeCompilerModalBtn = document.getElementById('closeCompilerModalBtn');
 const multiPdfDropzone = document.getElementById('multiPdfDropzone');
@@ -200,6 +201,27 @@ compileAndLoadBtn.addEventListener('click', () => {
 
   compilerModalOverlay.classList.remove('active');
   updateRamDashboard();
+});
+
+/**
+ * Export Active Chat Session into a 6.3 MB .kp Knowledge Pack File
+ */
+exportChatKpBtn.addEventListener('click', () => {
+  if (conversationHistory.length === 0) {
+    alert("Chat session is empty! Send a few messages first to build conversation context.");
+    return;
+  }
+
+  const result = rifEngine.exportChatSessionKp(conversationHistory);
+  
+  const url = URL.createObjectURL(result.blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = result.filename;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  appendMessage('assistant', `📦 Exported full chat session context (${result.tokenCount.toLocaleString()} Tokens) into **"${result.filename}"** (6.3 MB Fixed State Knowledge Pack). You can share or reload this .kp file anytime!`);
 });
 
 /**

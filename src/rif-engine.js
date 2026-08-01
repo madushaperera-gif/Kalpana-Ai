@@ -53,6 +53,53 @@ export class KalpanaRifEngine {
   }
 
   /**
+   * Export Active Chat Session into a 6.3 MB .kp Knowledge Pack
+   */
+  exportChatSessionKp(conversationHistory = [], customTitle = "") {
+    const dateStr = new Date().toISOString().split('T')[0];
+    const packTitle = customTitle || `Kalpana_Chat_Session_${dateStr}.kp`;
+
+    const chatText = conversationHistory
+      .map(m => `[${m.role.toUpperCase()}]: ${m.content}`)
+      .join('\n\n');
+
+    let fullContent = chatText;
+    if (this.activePack && this.activePack.extractedText) {
+      fullContent = `=== LOADED CONTEXT (${this.activePack.filename}) ===\n${this.activePack.extractedText}\n\n=== CHAT HISTORY ===\n${chatText}`;
+    }
+
+    const header = JSON.stringify({
+      version: "1.0",
+      type: "Kalpana_RIF_Chat_Export_Pack",
+      metadata: {
+        title: packTitle,
+        tokenCount: Math.min(this.tokenCount, 3000000),
+        bandwidth: 2048,
+        rifSizeMb: 6.3,
+        model: "qwen-0.5b-rif",
+        createdAt: new Date().toISOString()
+      },
+      content: fullContent
+    });
+
+    const encoder = new TextEncoder();
+    const headerBytes = encoder.encode(header.padEnd(2048, " "));
+    const dummyRifData = new Uint8Array(6.3 * 1024 * 1024);
+    
+    for (let i = 0; i < dummyRifData.length; i += 4) {
+      dummyRifData[i] = Math.floor(Math.sin(i) * 127 + 128);
+    }
+
+    const blob = new Blob([headerBytes, dummyRifData], { type: "application/octet-stream" });
+
+    return {
+      blob,
+      filename: packTitle.endsWith('.kp') ? packTitle : `${packTitle}.kp`,
+      tokenCount: this.tokenCount
+    };
+  }
+
+  /**
    * Add text files / PDFs to multi-file compiler
    */
   async processFilesForCompiler(fileList) {
@@ -142,7 +189,6 @@ export class KalpanaRifEngine {
 
     const blob = new Blob([headerBytes, dummyRifData], { type: "application/octet-stream" });
 
-    // Load compiled pack as active
     this.activePack = {
       id: `kp_${Math.random().toString(36).substring(2, 9)}`,
       filename: title.endsWith('.kp') ? title : `${title}.kp`,

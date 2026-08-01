@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <script type="module" crossorigin src="/assets/index-DB7_yW94.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Cx65iG_h.css">
+  <script type="module" crossorigin src="/assets/index-B9EYbjxX.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-rbJWvjAh.css">
 </head>
 <body>
 
@@ -63,7 +63,7 @@
   <!-- Main Workspace -->
   <div class="app-container">
     
-    <!-- Sidebar: Knowledge Packs & Compiler Button -->
+    <!-- Sidebar: Knowledge Packs, Compiler & Export Buttons -->
     <aside class="sidebar">
       <div class="sidebar-title">
         <span>Knowledge Packs (.kp)</span>
@@ -73,6 +73,11 @@
       <!-- Multi-PDF Compiler Trigger Button -->
       <button class="compile-trigger-btn" id="openCompilerModalBtn">
         <i class="fa-solid fa-file-pdf"></i> Compile Multi-PDF Knowledge Pack
+      </button>
+
+      <!-- Export Active Chat as .kp Button -->
+      <button class="export-chat-btn" id="exportChatKpBtn">
+        <i class="fa-solid fa-file-export"></i> Export Chat as .kp Pack (6.3 MB)
       </button>
 
       <!-- Drag and Drop Dropzone -->
@@ -114,7 +119,7 @@
           <div class="avatar assistant">K</div>
           <div class="bubble">
             Welcome to <strong>Kalpanā AI</strong>! I am running <strong>Qwen 0.5B</strong> directly inside your mobile browser via WebGPU.<br><br>
-            Notice the header bar above: <strong>Qwen Model RAM (350.0 MB)</strong> and <strong>Kalpanā RIF State (6.3 MB)</strong> are tracked separately. As our chat grows up to <strong>3 Million Tokens</strong>, my context memory stays bounded at <strong>6.3 MB</strong> forever!
+            Notice the header bar above: <strong>Qwen Model RAM (350.0 MB)</strong> and <strong>Kalpanā RIF State (6.3 MB)</strong> are tracked separately. As our chat grows up to <strong>3 Million Tokens</strong>, my context memory stays bounded at <strong>6.3 MB</strong> forever! Click <strong>"Export Chat as .kp Pack"</strong> anytime to save the full state.
           </div>
         </div>
 

@@ -183,7 +183,7 @@ body {
   justify-content: space-between;
 }
 
-/* Multi-PDF Compiler Trigger Button */
+/* Multi-PDF Compiler & Export Chat Buttons */
 .compile-trigger-btn {
   background: linear-gradient(135deg, rgba(222, 255, 154, 0.15), rgba(102, 242, 255, 0.15));
   border: 1px solid var(--accent-lime);
@@ -204,6 +204,28 @@ body {
   background: linear-gradient(135deg, var(--accent-lime), var(--accent-cyan));
   color: #000;
   box-shadow: 0 0 15px rgba(222, 255, 154, 0.3);
+}
+
+.export-chat-btn {
+  background: linear-gradient(135deg, rgba(102, 242, 255, 0.15), rgba(192, 132, 252, 0.15));
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.export-chat-btn:hover {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+  color: #000;
+  box-shadow: 0 0 15px rgba(102, 242, 255, 0.3);
 }
 
 /* Drag and Drop Zone for .kp files */
