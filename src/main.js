@@ -3,6 +3,7 @@
  * Manages On-Device WebGPU Qwen 0.5B + Kalpanā RIF Memory
  */
 
+import './style.css';
 import { KalpanaRifEngine } from './rif-engine.js';
 import { QwenWebGpuRunner } from './model-runner.js';
 
