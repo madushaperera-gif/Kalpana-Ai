@@ -69,7 +69,6 @@ const discardAndNewChatBtn = document.getElementById('discardAndNewChatBtn');
 
 // DOM Elements — PWA Installation
 const headerInstallBtn = document.getElementById('headerInstallBtn');
-const sidebarInstallBtn = document.getElementById('sidebarInstallBtn');
 const installModalOverlay = document.getElementById('installModalOverlay');
 const closeInstallModalBtn = document.getElementById('closeInstallModalBtn');
 const confirmInstallPromptBtn = document.getElementById('confirmInstallPromptBtn');
@@ -100,13 +99,11 @@ function handleAppInstall() {
       deferredPrompt = null;
     });
   } else {
-    // Show iOS & desktop install modal
     if (installModalOverlay) installModalOverlay.classList.add('active');
   }
 }
 
 if (headerInstallBtn) headerInstallBtn.addEventListener('click', handleAppInstall);
-if (sidebarInstallBtn) sidebarInstallBtn.addEventListener('click', handleAppInstall);
 if (confirmInstallPromptBtn) confirmInstallPromptBtn.addEventListener('click', handleAppInstall);
 
 if (closeInstallModalBtn) {
