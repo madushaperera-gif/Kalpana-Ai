@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: './',
   server: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
@@ -12,5 +13,6 @@ export default defineConfig({
   },
   build: {
     sourcemap: false,
+    outDir: 'dist',
   },
 });
