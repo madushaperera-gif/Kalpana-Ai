@@ -101,24 +101,33 @@ let isListening = false;
 let deferredPrompt = null;
 
 // Mobile Drawer Helpers
-function toggleMobileSidebar() {
+function toggleMobileSidebar(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
   if (!appSidebar) return;
   appSidebar.classList.toggle('mobile-open');
   if (sidebarBackdrop) sidebarBackdrop.classList.toggle('active');
 }
 
-function closeMobileSidebar() {
+function closeMobileSidebar(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
   if (appSidebar) appSidebar.classList.remove('mobile-open');
   if (sidebarBackdrop) sidebarBackdrop.classList.remove('active');
 }
 
-if (hamburgerBtn) hamburgerBtn.addEventListener('click', toggleMobileSidebar);
-if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeMobileSidebar);
-if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeMobileSidebar);
+if (hamburgerBtn) {
+  hamburgerBtn.addEventListener('click', toggleMobileSidebar);
+}
+if (closeSidebarBtn) {
+  closeSidebarBtn.addEventListener('click', closeMobileSidebar);
+}
+if (sidebarBackdrop) {
+  sidebarBackdrop.addEventListener('click', closeMobileSidebar);
+}
 
 // Privacy Modal Handlers
 if (openPrivacyModalLink) {
-  openPrivacyModalLink.addEventListener('click', () => {
+  openPrivacyModalLink.addEventListener('click', (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     closeMobileSidebar();
     if (privacyModalOverlay) privacyModalOverlay.classList.add('active');
   });
@@ -191,7 +200,8 @@ window.addEventListener('beforeinstallprompt', (e) => {
   console.log('PWA Install prompt captured');
 });
 
-function handleAppInstall() {
+function handleAppInstall(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
   recordDownloadMetric();
   if (deferredPrompt) {
     deferredPrompt.prompt();
@@ -207,10 +217,13 @@ function handleAppInstall() {
   }
 }
 
-if (headerInstallBtn) headerInstallBtn.addEventListener('click', handleAppInstall);
+if (headerInstallBtn) {
+  headerInstallBtn.addEventListener('click', handleAppInstall);
+}
 
 if (confirmInstallPromptBtn) {
-  confirmInstallPromptBtn.addEventListener('click', () => {
+  confirmInstallPromptBtn.addEventListener('click', (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     recordDownloadMetric();
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -225,8 +238,9 @@ if (confirmInstallPromptBtn) {
 }
 
 if (closeInstallModalBtn) {
-  closeInstallModalBtn.addEventListener('click', () => {
-    installModalOverlay.classList.remove('active');
+  closeInstallModalBtn.addEventListener('click', (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (installModalOverlay) installModalOverlay.classList.remove('active');
   });
 }
 

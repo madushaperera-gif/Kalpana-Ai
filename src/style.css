@@ -626,12 +626,14 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(3, 7, 18, 0.8);
+  height: 100dvh;
+  background: rgba(3, 7, 18, 0.85);
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
 }
 
 .modal-overlay.active {
@@ -826,16 +828,19 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   z-index: 1050;
   opacity: 0;
+  display: none;
   pointer-events: none;
   transition: opacity 0.3s ease;
 }
 
 .sidebar-backdrop.active {
+  display: block;
   opacity: 1;
   pointer-events: auto;
 }
@@ -856,6 +861,8 @@ body {
 
   .hamburger-btn {
     display: inline-flex;
+    cursor: pointer;
+    z-index: 100;
   }
 
   .mobile-close-sidebar-btn {
@@ -883,6 +890,8 @@ body {
     gap: 4px;
     white-space: nowrap;
     flex-shrink: 0;
+    cursor: pointer;
+    z-index: 100;
   }
 
   .install-pwa-btn img {
@@ -894,11 +903,13 @@ body {
   .sidebar {
     position: fixed;
     top: 0;
-    left: -320px;
+    left: 0;
     width: 290px;
+    max-width: 85vw;
     height: 100vh;
     height: 100dvh;
     z-index: 1100;
+    transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 6px 0 30px rgba(0, 0, 0, 0.8);
     overflow-y: auto;
@@ -908,7 +919,7 @@ body {
   }
 
   .sidebar.mobile-open {
-    transform: translateX(320px);
+    transform: translateX(0) !important;
   }
 
   /* Mobile Chat Layout & Fixed Bottom Input Bar */
