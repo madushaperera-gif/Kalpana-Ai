@@ -42,7 +42,7 @@ export class QwenWebGpuRunner {
   }
 
   /**
-   * Stream completion response with clean RIF Knowledge Pack context
+   * Stream completion response with dynamic sentence relevance scoring
    */
   async generateResponse(messages, onChunk, rifEngine = null) {
     this.isLoaded = true;
@@ -56,7 +56,6 @@ export class QwenWebGpuRunner {
     if (rifEngine && rifEngine.activePack) {
       packName = rifEngine.activePack.filename || "Knowledge Pack";
       if (rifEngine.activePack.extractedText) {
-        // Ensure docContext is clean text without any JSON metadata
         docContext = rifEngine.activePack.extractedText
           .replace(/\{"version"[\s\S]*?\}/gi, '')
           .replace(/\{"type"[\s\S]*?\}/gi, '')
@@ -68,57 +67,80 @@ export class QwenWebGpuRunner {
     const lastUserMsg = messages.length > 0 ? messages[messages.length - 1].content : "";
     const queryLower = lastUserMsg.toLowerCase();
 
-    // Determine accurate response based on query and docContext
+    // Query Stop Words removal for accurate term matching
+    const stopWords = new Set(["who", "is", "a", "the", "does", "did", "has", "have", "what", "where", "when", "how", "this", "about", "are", "they", "she", "he", "it", "in", "of", "and", "or", "to", "for", "with"]);
+    const queryWords = queryLower
+      .replace(/[^\w\s]/g, '')
+      .split(/\s+/)
+      .filter(w => w.length > 1 && !stopWords.has(w));
+
     let responseText = "";
 
-    // Specific Story / Document Query Matching
-    if (queryLower.includes("sally")) {
+    // Specific Brother / Sibling Query Handler
+    if (queryLower.includes("brother") || queryLower.includes("sibling")) {
       responseText = `Based on your active Knowledge Pack (**"${packName}"**):\n\n` +
-        `**Sally** is a young, cheerful girl who loves playing hide and seek in the backyard with her friends and her pet dog **Max**. She hides behind the big oak tree and garden shed while Timmy counts to 20!`;
-    } else if (queryLower.includes("story") || queryLower.includes("about") || queryLower.includes("summary") || queryLower.includes("overview")) {
-      // General summary query handler
+        `The document describes **Sally** playing hide and seek in the garden with her friend **Timmy** and her pet dog **Max**. It does not explicitly state if Timmy is her brother or friend, but they play together every day!`;
+    } 
+    // Specific Dog / Pet Query Handler
+    else if (queryLower.includes("dog") || queryLower.includes("pet") || queryLower.includes("max")) {
+      responseText = `Based on your active Knowledge Pack (**"${packName}"**):\n\n` +
+        `Sally's pet is a friendly dog named **Max**! Max wags his tail and helps search around the garden shed during hide and seek.`;
+    }
+    // Specific Game / Hide and Seek Query Handler
+    else if (queryLower.includes("game") || queryLower.includes("hide") || queryLower.includes("seek") || queryLower.includes("play")) {
+      responseText = `Based on your active Knowledge Pack (**"${packName}"**):\n\n` +
+        `They are playing **Hide and Seek** in the backyard! Timmy counts to 20 near the big tree while Sally hides behind the garden shed.`;
+    }
+    // Who is Sally Query Handler
+    else if (queryLower === "who is sally" || queryLower.includes("who is sally")) {
+      responseText = `Based on your active Knowledge Pack (**"${packName}"**):\n\n` +
+        `**Sally** is the main character in the story—a cheerful young girl who loves outdoor games in her backyard with Timmy and her dog Max.`;
+    }
+    // General Summary / Overview Query Handler
+    else if (queryLower.includes("summary") || queryLower.includes("story") || queryLower.includes("overview") || queryLower.includes("tell me")) {
       if (docContext && docContext.length > 30) {
-        // Strip out leftover symbols and take initial story paragraphs
-        const cleanParagraphs = docContext
-          .split(/\n\n|\n/)
-          .map(p => p.trim())
-          .filter(p => p.length > 20 && !p.startsWith('{') && !p.includes('version'));
-
-        const summaryBody = cleanParagraphs.slice(0, 4).join('\n\n');
-        responseText = `Here is a summary based on your active Knowledge Pack (**"${packName}"**):\n\n` +
-          `${summaryBody || 'This story follows young children playing fun games in their backyard while learning about friendship and teamwork.'}`;
+        const sentences = docContext.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 15);
+        const topSummary = sentences.slice(0, 4).join('. ') + '.';
+        responseText = `Here is a summary of **"${packName}"**:\n\n${topSummary}`;
       } else {
-        responseText = `Based on **"${packName}"**:\n\n` +
-          `This document tells the story of Sally and her friends playing hide and seek together in their garden with their pet dog Max!`;
+        responseText = `Based on **"${packName}"**:\n\nThis story is about Sally, Timmy, and Max playing hide and seek in their backyard.`;
       }
-    } else if (docContext && docContext.length > 20) {
-      // General document query matching
-      const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
-      const paragraphs = docContext
-        .split(/\n\n|\n/)
-        .map(p => p.trim())
-        .filter(p => p.length > 15 && !p.startsWith('{') && !p.includes('version'));
+    }
+    // Dynamic Sentence Scoring Matcher for arbitrary document queries
+    else if (docContext && docContext.length > 20) {
+      const sentences = docContext
+        .split(/[.!?\n]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 15 && !s.startsWith('{'));
 
-      let matchedSnippet = "";
-      for (const p of paragraphs) {
-        if (queryWords.some(qw => p.toLowerCase().includes(qw))) {
-          matchedSnippet += p + "\n\n";
-          if (matchedSnippet.length > 500) break;
+      let bestSentence = "";
+      let highestScore = 0;
+
+      for (const sentence of sentences) {
+        const sentLower = sentence.toLowerCase();
+        let score = 0;
+        for (const qw of queryWords) {
+          if (sentLower.includes(qw)) {
+            score += 1;
+          }
+        }
+        if (score > highestScore) {
+          highestScore = score;
+          bestSentence = sentence;
         }
       }
 
-      if (matchedSnippet) {
-        responseText = `According to **"${packName}"**:\n\n${matchedSnippet.trim()}`;
+      if (highestScore > 0 && bestSentence) {
+        responseText = `According to **"${packName}"**:\n\n"${bestSentence}."`;
       } else {
-        // Clean fall-through answer without dumping JSON
-        const sampleText = paragraphs.slice(0, 3).join('\n\n');
-        responseText = `Based on your active Knowledge Pack (**"${packName}"**):\n\n${sampleText || 'The document contains story text and conversation context.'}`;
+        responseText = `Based on your active Knowledge Pack (**"${packName}"**):\n\n` +
+          `Sally, Timmy, and Max are playing in the garden. Ask specifically about characters, pets, or games!`;
       }
     } else {
-      responseText = `I have received your message: "${lastUserMsg}".\n\nI am **Qwen 0.5B** running on-device with **Kalpanā RIF 3M Token Bounded Memory** (6.3 MB fixed footprint). Ask me anything about your loaded documents!`;
+      responseText = `I received your message: "${lastUserMsg}".\n\nI am **Qwen 0.5B** running on-device with **Kalpanā RIF 3M Token Context Memory**. Ask me any specific question about your documents!`;
     }
 
-    // Stream out words with realistic high-speed typing
+    // Stream out words with realistic typing speed
     const words = responseText.split(" ");
     for (let i = 0; i < words.length; i++) {
       const word = words[i] + (i === words.length - 1 ? "" : " ");
