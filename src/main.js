@@ -1,6 +1,7 @@
 /**
  * Kalpanā AI — Main Application Entry Point
  * Multi-PDF Knowledge Pack Compiler & Live 3M Token Capacity Tracker
+ * Features: Speech-to-Text Input, Listen Aloud Voice Output, Document Attachments
  */
 
 import './style.css';
@@ -20,7 +21,7 @@ const totalRamVal = document.getElementById('totalRamVal');
 const tradKvVal = document.getElementById('tradKvVal');
 const savingsBadge = document.getElementById('savingsBadge');
 
-// DOM Elements — Chat
+// DOM Elements — Chat & Inputs
 const chatMessages = document.getElementById('chatMessages');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
@@ -35,6 +36,12 @@ const kpTitle = document.getElementById('kpTitle');
 const kpMeta = document.getElementById('kpMeta');
 const unloadKpBtn = document.getElementById('unloadKpBtn');
 const gpuInfoText = document.getElementById('gpuInfoText');
+
+// DOM Elements — Speech & Attachments
+const speakerToggleBtn = document.getElementById('speakerToggleBtn');
+const micBtn = document.getElementById('micBtn');
+const attachBtn = document.getElementById('attachBtn');
+const promptAttachmentInput = document.getElementById('promptAttachmentInput');
 
 // DOM Elements — Multi-PDF Compiler Modal
 const openCompilerModalBtn = document.getElementById('openCompilerModalBtn');
@@ -64,6 +71,9 @@ const discardAndNewChatBtn = document.getElementById('discardAndNewChatBtn');
 let conversationHistory = [];
 let pendingCompilerEntries = [];
 let pendingTotalTokens = 0;
+let isReadAloudActive = true;
+let recognition = null;
+let isListening = false;
 
 // Initialize Application
 async function initApp() {
@@ -73,6 +83,7 @@ async function initApp() {
     activeKpCard.style.display = 'none';
 
     updateRamDashboard();
+    setupSpeechRecognition();
 
     if ('serviceWorker' in navigator) {
       try {
@@ -120,6 +131,146 @@ function updateRamDashboard() {
 }
 
 /**
+ * Audio Voice Read Aloud Toggle
+ */
+speakerToggleBtn.addEventListener('click', () => {
+  isReadAloudActive = !isReadAloudActive;
+  
+  if (isReadAloudActive) {
+    speakerToggleBtn.classList.add('active');
+    speakerToggleBtn.innerHTML = `<i class="fa-solid fa-volume-high"></i> Read Aloud: Active`;
+  } else {
+    speakerToggleBtn.classList.remove('active');
+    speakerToggleBtn.innerHTML = `<i class="fa-solid fa-volume-xmark"></i> Read Aloud: Muted`;
+    // Stop any ongoing speech
+    window.speechSynthesis.cancel();
+  }
+});
+
+/**
+ * Speech Recognition (Speech-to-Text Voice Dictation)
+ */
+function setupSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    micBtn.style.display = 'none';
+    console.warn("Speech recognition API not supported in this browser.");
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('listening');
+    userInput.placeholder = "Listening aloud... speak clearly now";
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    userInput.placeholder = "Ask Kalpanā anything (Local WebGPU + 3M Token RIF Bounded Context)...";
+  };
+
+  recognition.onerror = (e) => {
+    console.error("Speech recognition error:", e.error);
+    isListening = false;
+    micBtn.classList.remove('listening');
+  };
+
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    userInput.value = (userInput.value + " " + transcript).trim();
+    userInput.focus();
+  };
+}
+
+micBtn.addEventListener('click', () => {
+  if (!recognition) return;
+  
+  if (isListening) {
+    recognition.stop();
+  } else {
+    recognition.start();
+  }
+});
+
+/**
+ * Read Aloud (Text-to-Speech Output)
+ */
+function readResponseAloud(text) {
+  if (!isReadAloudActive) return;
+
+  // Cancel currently running speech first
+  window.speechSynthesis.cancel();
+
+  // Strip Markdown markers before reading aloud
+  const cleanText = text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/`(.*?)`/g, '$1')
+    .replace(/[#_*`~\[\]]/g, '');
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.rate = 1.05; // Slightly faster natural speed
+  
+  // Choose standard high-quality English voice if available
+  const voices = window.speechSynthesis.getVoices();
+  const enVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) || voices.find(v => v.lang.startsWith('en'));
+  if (enVoice) utterance.voice = enVoice;
+
+  window.speechSynthesis.speak(utterance);
+}
+
+// Trigger voices load (required for some browsers)
+window.speechSynthesis.getVoices();
+
+/**
+ * Document Attachments handler (PDF, TXT, MD)
+ */
+attachBtn.addEventListener('click', () => promptAttachmentInput.click());
+
+promptAttachmentInput.addEventListener('change', async (e) => {
+  if (e.target.files.length > 0) {
+    const file = e.target.files[0];
+    await handlePromptAttachment(file);
+  }
+});
+
+async function handlePromptAttachment(file) {
+  appendMessage('assistant', `<i class="fa-solid fa-spinner fa-spin"></i> Parsing attached document **"${file.name}"**...`);
+  
+  try {
+    let extractedText = "";
+    if (file.name.endsWith('.pdf')) {
+      extractedText = await rifEngine._extractTextFromPdf(file);
+    } else {
+      extractedText = await file.text();
+    }
+
+    const estTokens = Math.max(Math.floor(extractedText.length / 4), 10);
+    
+    // Add file text to local prompt input to send
+    userInput.value = `[Document Attachment: "${file.name}" (${estTokens.toLocaleString()} Tokens)]\n\n${extractedText.substring(0, 10000)}\n\nUser Query: ${userInput.value}`;
+    
+    // Increment token count
+    rifEngine.addTokens(estTokens);
+    updateRamDashboard();
+
+    // Clear loading bubble
+    chatMessages.lastElementChild.remove();
+    appendMessage('assistant', `📎 Successfully attached **"${file.name}"** (${estTokens.toLocaleString()} Tokens). The text context has been injected directly into Kalpanā's prompt RIF memory.`);
+    userInput.focus();
+  } catch (err) {
+    chatMessages.lastElementChild.remove();
+    alert(`Failed to parse attachment: ${err.message}`);
+  }
+}
+
+/**
  * New Chat / Delete Conversation Handlers with Save Prompt
  */
 newChatBtn.addEventListener('click', () => {
@@ -155,6 +306,7 @@ discardAndNewChatBtn.addEventListener('click', () => {
 function resetChatSession() {
   conversationHistory = [];
   rifEngine.tokenCount = rifEngine.activePack ? rifEngine.activePack.metadata.tokenCount : 0;
+  window.speechSynthesis.cancel();
   
   chatMessages.innerHTML = `
     <div class="message-row">
@@ -176,6 +328,7 @@ unloadKpBtn.addEventListener('click', () => {
   rifEngine.activePack = null;
   rifEngine.tokenCount = 0;
   activeKpCard.style.display = 'none';
+  window.speechSynthesis.cancel();
   updateRamDashboard();
 });
 
@@ -351,6 +504,9 @@ async function handleSend() {
     }
 
     conversationHistory.push({ role: 'assistant', content: assistantBubble.innerText });
+    
+    // Read the response aloud
+    readResponseAloud(assistantBubble.innerText);
   } catch (err) {
     console.error("Inference execution error:", err);
     assistantBubble.innerHTML = `<span style="color: var(--accent-rose);">Error: ${err.message}</span>`;
@@ -386,7 +542,7 @@ function appendMessage(role, content) {
   return bubble;
 }
 
-// Single Form Submit listener (handles both button click and Enter key keydown cleanly)
+// Single Form Submit listener
 if (chatForm) {
   chatForm.addEventListener('submit', (e) => {
     e.preventDefault();

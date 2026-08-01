@@ -10,8 +10,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <!-- Load PDF.js via CDN to avoid Vite/esbuild bundler sourcemap errors -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
@@ -106,6 +104,14 @@
       </div>
 
       <div class="sidebar-title" style="margin-top: 10px;">
+        <span>Speech Controls</span>
+      </div>
+      <!-- Voice Read Aloud Toggle Button -->
+      <button class="speech-toggle-btn active" id="speakerToggleBtn" type="button">
+        <i class="fa-solid fa-volume-high"></i> Read Aloud: Active
+      </button>
+
+      <div class="sidebar-title" style="margin-top: 10px;">
         <span>Hardware Engine</span>
       </div>
       
@@ -131,9 +137,21 @@
 
       </div>
 
-      <!-- Chat Input Form -->
+      <!-- Chat Input Form with Attachment, Mic, and Send Buttons -->
       <form class="chat-input-bar" id="chatForm" action="javascript:void(0);">
-        <input type="text" class="chat-input" id="userInput" placeholder="Ask Qwen 0.5B anything (Local WebGPU + 3M Token RIF Bounded Context)..." autocomplete="off" />
+        <!-- File Attachment Button -->
+        <button type="button" class="input-action-btn" id="attachBtn" title="Attach Document (PDF, TXT, MD)">
+          <i class="fa-solid fa-paperclip"></i>
+        </button>
+        <input type="file" id="promptAttachmentInput" accept=".pdf,.txt,.md" style="display: none;" />
+
+        <!-- Speech Input Mic Button -->
+        <button type="button" class="input-action-btn" id="micBtn" title="Speak to Prompt">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+
+        <input type="text" class="chat-input" id="userInput" placeholder="Ask Kalpanā anything (Local WebGPU + 3M Token RIF Bounded Context)..." autocomplete="off" />
+        
         <button type="submit" class="send-btn" id="sendBtn">
           <span>Send</span>
           <i class="fa-solid fa-paper-plane"></i>
