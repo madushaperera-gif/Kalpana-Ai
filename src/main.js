@@ -3,7 +3,7 @@
  * Multi-PDF Knowledge Pack Compiler & Live 3M Token Capacity Tracker
  */
 
-import './style.css';
+import '/src/style.css';
 import { KalpanaRifEngine } from './rif-engine.js';
 import { QwenWebGpuRunner } from './model-runner.js';
 
