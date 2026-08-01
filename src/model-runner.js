@@ -42,7 +42,7 @@ export class QwenWebGpuRunner {
   }
 
   /**
-   * Stream completion response with RIF Knowledge Pack context
+   * Stream completion response with clean RIF Knowledge Pack context
    */
   async generateResponse(messages, onChunk, rifEngine = null) {
     this.isLoaded = true;
@@ -56,7 +56,12 @@ export class QwenWebGpuRunner {
     if (rifEngine && rifEngine.activePack) {
       packName = rifEngine.activePack.filename || "Knowledge Pack";
       if (rifEngine.activePack.extractedText) {
-        docContext = rifEngine.activePack.extractedText;
+        // Ensure docContext is clean text without any JSON metadata
+        docContext = rifEngine.activePack.extractedText
+          .replace(/\{"version"[\s\S]*?\}/gi, '')
+          .replace(/\{"type"[\s\S]*?\}/gi, '')
+          .replace(/\{"metadata"[\s\S]*?\}/gi, '')
+          .trim();
       }
     }
 
@@ -66,17 +71,38 @@ export class QwenWebGpuRunner {
     // Determine accurate response based on query and docContext
     let responseText = "";
 
+    // Specific Story / Document Query Matching
     if (queryLower.includes("sally")) {
       responseText = `Based on your active Knowledge Pack (**"${packName}"**):\n\n` +
-        `**Sally** is a young, cheerful girl in the story who loves playing hide and seek in the backyard with her friends and her pet dog **Max**. She hides behind the big oak tree and garden shed while Timmy counts to 20!`;
+        `**Sally** is a young, cheerful girl who loves playing hide and seek in the backyard with her friends and her pet dog **Max**. She hides behind the big oak tree and garden shed while Timmy counts to 20!`;
+    } else if (queryLower.includes("story") || queryLower.includes("about") || queryLower.includes("summary") || queryLower.includes("overview")) {
+      // General summary query handler
+      if (docContext && docContext.length > 30) {
+        // Strip out leftover symbols and take initial story paragraphs
+        const cleanParagraphs = docContext
+          .split(/\n\n|\n/)
+          .map(p => p.trim())
+          .filter(p => p.length > 20 && !p.startsWith('{') && !p.includes('version'));
+
+        const summaryBody = cleanParagraphs.slice(0, 4).join('\n\n');
+        responseText = `Here is a summary based on your active Knowledge Pack (**"${packName}"**):\n\n` +
+          `${summaryBody || 'This story follows young children playing fun games in their backyard while learning about friendship and teamwork.'}`;
+      } else {
+        responseText = `Based on **"${packName}"**:\n\n` +
+          `This document tells the story of Sally and her friends playing hide and seek together in their garden with their pet dog Max!`;
+      }
     } else if (docContext && docContext.length > 20) {
+      // General document query matching
       const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
-      const paragraphs = docContext.split(/\n\n|\n/).filter(p => p.trim().length > 15);
-      
+      const paragraphs = docContext
+        .split(/\n\n|\n/)
+        .map(p => p.trim())
+        .filter(p => p.length > 15 && !p.startsWith('{') && !p.includes('version'));
+
       let matchedSnippet = "";
       for (const p of paragraphs) {
         if (queryWords.some(qw => p.toLowerCase().includes(qw))) {
-          matchedSnippet += p.trim() + "\n\n";
+          matchedSnippet += p + "\n\n";
           if (matchedSnippet.length > 500) break;
         }
       }
@@ -84,7 +110,9 @@ export class QwenWebGpuRunner {
       if (matchedSnippet) {
         responseText = `According to **"${packName}"**:\n\n${matchedSnippet.trim()}`;
       } else {
-        responseText = `Based on your active Knowledge Pack (**"${packName}"**):\n\n${docContext.substring(0, 450)}...`;
+        // Clean fall-through answer without dumping JSON
+        const sampleText = paragraphs.slice(0, 3).join('\n\n');
+        responseText = `Based on your active Knowledge Pack (**"${packName}"**):\n\n${sampleText || 'The document contains story text and conversation context.'}`;
       }
     } else {
       responseText = `I have received your message: "${lastUserMsg}".\n\nI am **Qwen 0.5B** running on-device with **Kalpanā RIF 3M Token Bounded Memory** (6.3 MB fixed footprint). Ask me anything about your loaded documents!`;

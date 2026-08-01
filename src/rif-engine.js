@@ -2,7 +2,6 @@
  * Kalpanā RIF Engine — Multi-Document Knowledge Pack Compiler & 3M Token Tracker
  */
 
-// Use global pdfjsLib from window
 const getPdfjsLib = () => {
   return window.pdfjsLib || null;
 };
@@ -10,12 +9,12 @@ const getPdfjsLib = () => {
 export class KalpanaRifEngine {
   constructor(options = {}) {
     this.bandwidth = options.bandwidth || 2048;
-    this.maxTokens = 3000000; // 3 Million Tokens Ceiling
-    this.rifStateMb = 6.3;    // Bounded O(1) Memory
+    this.maxTokens = 3000000;
+    this.rifStateMb = 6.3;
     
-    this.tokenCount = 1500;   // Default initial chat tokens
+    this.tokenCount = 0;
     this.activePack = null;
-    this.selectedFiles = [];   // Multi-file compiler selection
+    this.selectedFiles = [];
   }
 
   /**
@@ -25,9 +24,8 @@ export class KalpanaRifEngine {
     const qwenRam = qwenModelLoaded ? qwenModelMb : 350.0;
     const rifRam = this.rifStateMb;
     
-    const tokens = Math.max(this.tokenCount, 100);
-    // Standard KV Cache FP16: 2 * 24 layers * 16 heads * tokens * 64 dim * 2 bytes
-    const standardKvBytes = 2 * 24 * 16 * tokens * 64 * 2;
+    const tokens = Math.max(this.tokenCount, 0);
+    const standardKvBytes = 2 * 24 * 16 * Math.max(tokens, 100) * 64 * 2;
     const standardKvMb = Math.round((standardKvBytes / (1024 * 1024)) * 10) / 10;
 
     const memorySavingsPct = standardKvMb > rifRam 
@@ -143,7 +141,6 @@ export class KalpanaRifEngine {
       const arrayBuffer = await file.arrayBuffer();
       const lib = getPdfjsLib();
       if (!lib) {
-        console.warn("PDF.js library not yet loaded in window.");
         return `[PDF Document: ${file.name}]`;
       }
       const pdf = await lib.getDocument({ data: arrayBuffer }).promise;
@@ -247,25 +244,47 @@ export class KalpanaRifEngine {
     return this.activePack;
   }
 
+  /**
+   * Clean text extraction: Removes JSON headers, PyTorch pickles, and metadata noise
+   */
   _extractTextFromBuffer(buffer) {
     const decoder = new TextDecoder('utf-8', { fatal: false });
     const fullText = decoder.decode(buffer);
     
+    // First try extracting clean content JSON property
     try {
       const jsonMatches = fullText.match(/\{[\s\S]*?\}/g);
       if (jsonMatches) {
         for (const jm of jsonMatches) {
           try {
             const parsed = JSON.parse(jm);
-            if (parsed.content) return parsed.content;
+            if (parsed.content && parsed.content.length > 20) {
+              return this._cleanHeaderBoilerplate(parsed.content);
+            }
           } catch(e) {}
         }
       }
     } catch(e) {}
 
+    // Extract printable strings of length >= 4
     const printable = fullText.match(/[\x20-\x7E\x0A\x0D]{4,}/g) || [];
-    const filtered = printable.filter(s => !s.startsWith("PK") && !s.includes("torch")).join(" ");
-    return filtered.length > 50 ? filtered : "Document context loaded in Kalpanā RIF memory.";
+    const filtered = printable
+      .filter(s => !s.startsWith("PK") && !s.includes("torch") && !s.includes("__main__") && !s.includes("Kalpana_RIF_"))
+      .join(" ");
+
+    return this._cleanHeaderBoilerplate(filtered.length > 50 ? filtered : "Document context loaded in Kalpanā RIF memory.");
+  }
+
+  /**
+   * Helper: Strips JSON header metadata blocks from document text
+   */
+  _cleanHeaderBoilerplate(text) {
+    return text
+      .replace(/\{"version"[\s\S]*?\}/gi, '')
+      .replace(/\{"type"[\s\S]*?\}/gi, '')
+      .replace(/\{"metadata"[\s\S]*?\}/gi, '')
+      .replace(/=== DOCUMENT: [\s\S]*? ===/g, '')
+      .trim();
   }
 
   addTokens(count) {
