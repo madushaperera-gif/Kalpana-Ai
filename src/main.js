@@ -348,7 +348,7 @@ function resetChatSession() {
   chatMessages.innerHTML = `
     <div class="message-row">
       <div class="avatar assistant">
-        <img src="/assets/icon-192.png" style="width:20px;height:20px;border-radius:4px;object-fit:cover;" alt="Kalpanā">
+        <img src="assets/icon-192.png" style="width:20px;height:20px;border-radius:4px;object-fit:cover;" alt="Kalpanā">
       </div>
       <div class="bubble">
         Started a <strong>New Chat Session</strong>! Context memory has been reset.<br><br>
