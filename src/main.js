@@ -74,10 +74,16 @@ const closeInstallModalBtn = document.getElementById('closeInstallModalBtn');
 const confirmInstallPromptBtn = document.getElementById('confirmInstallPromptBtn');
 
 // DOM Elements — Privacy Disclaimer Modal
-const openPrivacyModalBtn = document.getElementById('openPrivacyModalBtn');
+const openPrivacyModalLink = document.getElementById('openPrivacyModalLink');
 const privacyModalOverlay = document.getElementById('privacyModalOverlay');
 const closePrivacyModalBtn = document.getElementById('closePrivacyModalBtn');
 const closePrivacyModalConfirmBtn = document.getElementById('closePrivacyModalConfirmBtn');
+
+// DOM Elements — Mobile Hamburger Drawer
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+const appSidebar = document.getElementById('appSidebar');
 
 // DOM Elements — Global Reach Metrics
 const metricsViews = document.getElementById('metricsViews');
@@ -94,9 +100,26 @@ let recognition = null;
 let isListening = false;
 let deferredPrompt = null;
 
+// Mobile Drawer Helpers
+function toggleMobileSidebar() {
+  if (!appSidebar) return;
+  appSidebar.classList.toggle('mobile-open');
+  if (sidebarBackdrop) sidebarBackdrop.classList.toggle('active');
+}
+
+function closeMobileSidebar() {
+  if (appSidebar) appSidebar.classList.remove('mobile-open');
+  if (sidebarBackdrop) sidebarBackdrop.classList.remove('active');
+}
+
+if (hamburgerBtn) hamburgerBtn.addEventListener('click', toggleMobileSidebar);
+if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeMobileSidebar);
+if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeMobileSidebar);
+
 // Privacy Modal Handlers
-if (openPrivacyModalBtn) {
-  openPrivacyModalBtn.addEventListener('click', () => {
+if (openPrivacyModalLink) {
+  openPrivacyModalLink.addEventListener('click', () => {
+    closeMobileSidebar();
     if (privacyModalOverlay) privacyModalOverlay.classList.add('active');
   });
 }
@@ -381,6 +404,7 @@ async function handlePromptAttachment(file) {
  * New Chat / Delete Conversation Handlers with Save Prompt
  */
 newChatBtn.addEventListener('click', () => {
+  closeMobileSidebar();
   if (conversationHistory.length > 0) {
     newChatModalOverlay.classList.add('active');
   } else {
@@ -446,6 +470,7 @@ unloadKpBtn.addEventListener('click', () => {
  * Multi-PDF Compiler Modal Handlers
  */
 openCompilerModalBtn.addEventListener('click', () => {
+  closeMobileSidebar();
   compilerModalOverlay.classList.add('active');
 });
 

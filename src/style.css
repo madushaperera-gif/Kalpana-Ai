@@ -782,17 +782,161 @@ body {
   border-top: 1px solid var(--border-subtle);
 }
 
-/* Responsive Rules */
+/* Hamburger Toggle & Backdrop Overlay Styles */
+.hamburger-btn {
+  display: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.hamburger-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--accent-cyan);
+}
+
+.mobile-close-sidebar-btn {
+  display: none;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+  z-index: 10;
+}
+
+.mobile-close-sidebar-btn:hover {
+  color: var(--accent-rose);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1050;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Responsive Rules for Mobile & Small Screen Devices */
 @media (max-width: 768px) {
-  .app-header {
-    flex-direction: column;
-    align-items: stretch;
+  .hamburger-btn {
+    display: inline-flex;
   }
+
+  .mobile-close-sidebar-btn {
+    display: block;
+  }
+
+  .app-header {
+    padding: 10px 14px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
   .ram-dashboard {
     flex-wrap: wrap;
     justify-content: space-around;
+    padding: 4px 8px;
+    gap: 6px;
+    width: 100%;
   }
+
+  .ram-metric {
+    padding: 2px 4px;
+  }
+
+  .ram-value {
+    font-size: 11px;
+  }
+
+  .ram-label {
+    font-size: 8px;
+  }
+
+  .savings-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  /* Off-Canvas Slide-Out Mobile Drawer */
   .sidebar {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 290px;
+    height: 100vh;
+    z-index: 1100;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 6px 0 30px rgba(0, 0, 0, 0.8);
+    overflow-y: auto;
+    background: #0b1329;
+    border-right: 1px solid var(--border-glow);
+    padding-top: 45px;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(320px);
+  }
+
+  .chat-messages {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .bubble {
+    font-size: 13px;
+    padding: 10px 14px;
+    max-width: 90%;
+  }
+
+  .chat-input-bar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .chat-input {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .send-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-title {
+    font-size: 15px;
+  }
+  .brand-subtitle {
+    display: none;
+  }
+  .ram-metric.trad-metric,
+  .divider.trad-divider {
     display: none;
   }
 }
