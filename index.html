@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Kalpanā AI — On-Device WebGPU + 3M Token Bounded RIF</title>
   <meta name="description" content="Local WebGPU On-Device LLM Inference with Bounded 6.3 MB Kalpanā RIF Context Memory" />
+  <link rel="icon" type="image/png" href="/assets/icon-192.png">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
   <link rel="manifest" href="/manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +20,7 @@
   <!-- Top Header with Separate Live RAM Usage & 3M Token Capacity Dashboard -->
   <header class="app-header">
     <div class="brand-section">
-      <div class="brand-icon">K</div>
+      <img src="/assets/icon-192.png" alt="Kalpanā" style="width:34px;height:34px;border-radius:8px;object-fit:cover;">
       <div>
         <div class="brand-title">Kalpanā AI</div>
         <div class="brand-subtitle">On-Device WebGPU · 3M Token RIF</div>
@@ -73,25 +75,25 @@
 
       <!-- New Chat Button -->
       <button class="new-chat-btn" id="newChatBtn" type="button">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         New Chat Session
       </button>
 
       <!-- Multi-PDF Compiler Trigger Button -->
       <button class="compile-trigger-btn" id="openCompilerModalBtn" type="button">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
         Compile Multi-PDF Knowledge Pack
       </button>
 
       <!-- Export Active Chat as .kp Button -->
       <button class="export-chat-btn" id="exportChatKpBtn" type="button">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Export Chat as .kp Pack (6.3 MB)
       </button>
 
       <!-- Drag and Drop Dropzone -->
       <div class="dropzone" id="kpDropzone">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropzone-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropzone-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <div class="dropzone-text">Drop .kp or PDF File Here</div>
         <div class="dropzone-subtext">or click to browse local files</div>
         <input type="file" id="kpFileInput" accept=".kp,.pdf,.txt,.md" style="display: none;" />
@@ -134,7 +136,9 @@
       <div class="chat-messages" id="chatMessages">
         
         <div class="message-row">
-          <div class="avatar assistant">K</div>
+          <div class="avatar assistant">
+            <img src="/assets/icon-192.png" style="width:20px;height:20px;border-radius:4px;object-fit:cover;" alt="Kalpanā">
+          </div>
           <div class="bubble">
             Welcome to <strong>Kalpanā AI</strong>! I am running <strong>Qwen 0.5B</strong> directly inside your mobile browser via WebGPU.<br><br>
             Notice the header bar above: <strong>Qwen Model RAM (350.0 MB)</strong> and <strong>Kalpanā RIF State (6.3 MB)</strong> are tracked separately. As our chat grows up to <strong>3 Million Tokens</strong>, my context memory stays bounded at <strong>6.3 MB</strong> forever! Click <strong>"Export Chat as .kp Pack"</strong> anytime to save the full state.
@@ -147,7 +151,9 @@
       <form class="chat-input-bar" id="chatForm" action="javascript:void(0);">
         <!-- File Attachment Button -->
         <button type="button" class="input-action-btn" id="attachBtn" title="Attach Document (PDF, TXT, MD)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.625-13.624l-10.94 10.94a1.5 1.5 0 002.122 2.122l10.94-10.94a.75.75 0 00-1.06-1.06L8.552 18.32" />
+          </svg>
         </button>
         <input type="file" id="promptAttachmentInput" accept=".pdf,.txt,.md" style="display: none;" />
 
@@ -159,8 +165,7 @@
         <input type="text" class="chat-input" id="userInput" placeholder="Ask Kalpanā anything (Local WebGPU + 3M Token RIF Bounded Context)..." autocomplete="off" />
         
         <button type="submit" class="send-btn" id="sendBtn">
-          <span>Send</span>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          <img src="/assets/curl-white.png" style="width:16px;height:16px;object-fit:contain" alt="Send">
         </button>
       </form>
     </main>
@@ -173,7 +178,7 @@
       <div class="modal-header">
         <div>
           <h3 style="color: var(--accent-cyan); font-size: 16px; display: flex; align-items: center; gap: 8px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
             Multi-Document Knowledge Pack Compiler
           </h3>
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Combine multiple PDFs, TXT, or MD documents into a single 6.3 MB .kp Knowledge Pack</div>
@@ -243,7 +248,7 @@
         </p>
 
         <button class="send-btn" id="saveAndNewChatBtn" type="button" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #000; width: 100%; justify-content: center;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Save as .kp & Start New Chat
         </button>
 
