@@ -1,6 +1,6 @@
 /**
  * Kalpanā AI — Main Application Entry Point
- * Manages On-Device WebGPU Qwen 0.5B + Kalpanā RIF Memory
+ * Multi-PDF Knowledge Pack Compiler & Live 3M Token Capacity Tracker
  */
 
 import './style.css';
@@ -11,44 +11,62 @@ import { QwenWebGpuRunner } from './model-runner.js';
 const rifEngine = new KalpanaRifEngine({ bandwidth: 2048 });
 const modelRunner = new QwenWebGpuRunner();
 
-// DOM Elements
+// DOM Elements — Header Dashboard
 const qwenRamVal = document.getElementById('qwenRamVal');
 const rifRamVal = document.getElementById('rifRamVal');
+const rifTokenCapacity = document.getElementById('rifTokenCapacity');
+const rifTokenPercent = document.getElementById('rifTokenPercent');
 const totalRamVal = document.getElementById('totalRamVal');
 const tradKvVal = document.getElementById('tradKvVal');
 const savingsBadge = document.getElementById('savingsBadge');
 
+// DOM Elements — Chat
 const chatMessages = document.getElementById('chatMessages');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
 
+// DOM Elements — Sidebar & Single Dropzone
 const kpDropzone = document.getElementById('kpDropzone');
 const kpFileInput = document.getElementById('kpFileInput');
 const activeKpCard = document.getElementById('activeKpCard');
 const kpTitle = document.getElementById('kpTitle');
 const kpMeta = document.getElementById('kpMeta');
-const generateSampleBtn = document.getElementById('generateSampleBtn');
 const gpuInfoText = document.getElementById('gpuInfoText');
 
-// Conversation History
-let conversationHistory = [];
+// DOM Elements — Multi-PDF Compiler Modal
+const openCompilerModalBtn = document.getElementById('openCompilerModalBtn');
+const compilerModalOverlay = document.getElementById('compilerModalOverlay');
+const closeCompilerModalBtn = document.getElementById('closeCompilerModalBtn');
+const multiPdfDropzone = document.getElementById('multiPdfDropzone');
+const multiFileInput = document.getElementById('multiFileInput');
+const selectedFilesList = document.getElementById('selectedFilesList');
+const selectedFileCount = document.getElementById('selectedFileCount');
 
-// Initialize App
+const compilerGaugePct = document.getElementById('compilerGaugePct');
+const compilerGaugeFill = document.getElementById('compilerGaugeFill');
+const compilerTokensUsed = document.getElementById('compilerTokensUsed');
+const compilerTokensRemaining = document.getElementById('compilerTokensRemaining');
+
+const kpOutputTitle = document.getElementById('kpOutputTitle');
+const compileAndLoadBtn = document.getElementById('compileAndLoadBtn');
+
+// State
+let conversationHistory = [];
+let pendingCompilerEntries = [];
+let pendingTotalTokens = 0;
+
+// Initialize Application
 async function initApp() {
-  // Update Live RAM Usage Header
   updateRamDashboard();
 
-  // Register Service Worker for PWA Offline Mode
+  // Register PWA Service Worker
   if ('serviceWorker' in navigator) {
     try {
       await navigator.serviceWorker.register('/sw.js');
-      console.log('Kalpanā PWA Service Worker Registered');
-    } catch (e) {
-      console.log('PWA Service Worker Registration skipped:', e.message);
-    }
+    } catch (e) {}
   }
 
-  // Check WebGPU Support & Load Model
+  // Check WebGPU & Load Model
   const gpuStatus = await modelRunner.checkWebGpuSupport();
   if (gpuStatus.supported) {
     gpuInfoText.innerHTML = `⚡ <strong>WebGPU Active:</strong> ${gpuStatus.adapterInfo.vendor || 'Local GPU'}`;
@@ -56,7 +74,6 @@ async function initApp() {
     gpuInfoText.innerHTML = `⚠️ <strong>WASM Fallback:</strong> ${gpuStatus.reason}`;
   }
 
-  // Auto Load Qwen 0.5B
   try {
     await modelRunner.loadModel();
     updateRamDashboard();
@@ -64,28 +81,153 @@ async function initApp() {
     console.error("Model load error:", err);
   }
 
-  // Setup Default Demo Knowledge Pack
+  // Default Demo Knowledge Pack
   const sample = rifEngine.generateSampleKp();
   rifEngine.loadKnowledgePack(await sample.blob.arrayBuffer());
   updateRamDashboard();
 }
 
 /**
- * Updates the Header RAM Usage Dashboard (Separate Qwen vs RIF RAM)
+ * Updates Header RAM Dashboard & Live 3M Token Capacity
  */
 function updateRamDashboard() {
   const stats = rifEngine.getLiveMemoryStats(modelRunner.isLoaded, 350.0);
   
   qwenRamVal.textContent = `${stats.qwenRamMb} MB`;
   rifRamVal.textContent = `${stats.rifRamMb} MB`;
+  rifTokenCapacity.textContent = `${stats.formattedTokenCount} / 3,000,000 Tokens`;
+  rifTokenPercent.textContent = `${stats.capacityPct}% Capacity`;
+  
   totalRamVal.textContent = `${stats.totalAppRamMb} MB`;
   tradKvVal.textContent = `${stats.standardKvMb} MB`;
-  
   savingsBadge.textContent = `⚡ ${stats.memorySavingsPct}% RAM Saved`;
 }
 
 /**
- * Send User Message & Stream Qwen 0.5B + RIF Response
+ * Multi-PDF Compiler Modal Open / Close Handlers
+ */
+openCompilerModalBtn.addEventListener('click', () => {
+  compilerModalOverlay.classList.add('active');
+});
+
+closeCompilerModalBtn.addEventListener('click', () => {
+  compilerModalOverlay.classList.remove('active');
+});
+
+compilerModalOverlay.addEventListener('click', (e) => {
+  if (e.target === compilerModalOverlay) {
+    compilerModalOverlay.classList.remove('active');
+  }
+});
+
+/**
+ * Multi-File Selection & Token Capacity Gauge Update
+ */
+multiPdfDropzone.addEventListener('click', () => multiFileInput.click());
+
+multiFileInput.addEventListener('change', async (e) => {
+  if (e.target.files.length > 0) {
+    await handleMultiFileSelection(Array.from(e.target.files));
+  }
+});
+
+async function handleMultiFileSelection(files) {
+  multiPdfDropzone.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="font-size: 28px; color: var(--accent-cyan);"></i><div style="font-size: 12px; margin-top: 6px;">Parsing PDF / Document token counts...</div>`;
+  
+  const result = await rifEngine.processFilesForCompiler(files);
+  pendingCompilerEntries = result.entries;
+  pendingTotalTokens = result.totalEstimatedTokens;
+
+  // Restore Dropzone text
+  multiPdfDropzone.innerHTML = `
+    <i class="fa-solid fa-folder-open" style="font-size: 32px; color: var(--accent-lime); margin-bottom: 8px;"></i>
+    <div style="font-size: 13px; font-weight: 700;">Select Multiple PDF / Text Files</div>
+    <div style="font-size: 11px; color: var(--text-muted);">Hold Ctrl/Cmd or Shift to select multiple files at once</div>
+  `;
+
+  // Render Selected Files List
+  selectedFileCount.textContent = pendingCompilerEntries.length;
+  selectedFilesList.innerHTML = pendingCompilerEntries.map(e => `
+    <div class="selected-file-item">
+      <span class="file-item-name"><i class="fa-regular fa-file-pdf" style="margin-right: 6px; color: var(--accent-rose);"></i> ${escapeHtml(e.name)}</span>
+      <span class="file-item-tokens">~${e.estimatedTokens.toLocaleString()} Tokens</span>
+    </div>
+  `).join('');
+
+  // Update Live 3M Token Capacity Gauge
+  const pct = Math.min(Math.round((pendingTotalTokens / 3000000) * 1000) / 10, 100);
+  compilerGaugePct.textContent = `${pendingTotalTokens.toLocaleString()} / 3,000,000 Tokens (${pct}%)`;
+  compilerGaugeFill.style.width = `${pct}%`;
+  
+  compilerTokensUsed.textContent = `Tokens Used: ${pendingTotalTokens.toLocaleString()} Tokens`;
+  compilerTokensRemaining.textContent = `Tokens Remaining: ${result.tokensRemaining.toLocaleString()} Tokens`;
+
+  if (result.isExceeded) {
+    compilerGaugeFill.classList.add('exceeded');
+    compilerTokensRemaining.style.color = 'var(--accent-rose)';
+    compilerTokensRemaining.textContent = `⚠️ EXCEEDED 3M LIMIT by ${(pendingTotalTokens - 3000000).toLocaleString()} Tokens`;
+  } else {
+    compilerGaugeFill.classList.remove('exceeded');
+    compilerTokensRemaining.style.color = 'var(--accent-lime)';
+  }
+}
+
+/**
+ * Compile Multi-Doc Knowledge Pack & Load into Active RIF Memory
+ */
+compileAndLoadBtn.addEventListener('click', () => {
+  if (pendingCompilerEntries.length === 0) {
+    alert("Please select at least one PDF or document file to compile!");
+    return;
+  }
+
+  const title = kpOutputTitle.value.trim() || "My_MultiDoc_Knowledge_Pack";
+  const result = rifEngine.compileMultiDocKp(title, pendingCompilerEntries, pendingTotalTokens);
+  
+  // Download compiled .kp file
+  const url = URL.createObjectURL(result.blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = result.filename;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Update Active KP Card
+  kpTitle.textContent = result.pack.filename;
+  kpMeta.textContent = `${result.pack.metadata.docCount} Docs · ${result.pack.metadata.tokenCount.toLocaleString()} Tokens · Bounded 6.3 MB`;
+
+  appendMessage('assistant', `✅ Compiled **${result.pack.metadata.docCount} Documents** into **"${result.pack.filename}"** (6.3 MB Fixed State) and loaded into Kalpanā RIF memory! Total Context: **${result.pack.metadata.tokenCount.toLocaleString()} Tokens**.`);
+
+  compilerModalOverlay.classList.remove('active');
+  updateRamDashboard();
+});
+
+/**
+ * Single File Dropzone Handler (.kp or single PDF)
+ */
+kpDropzone.addEventListener('click', () => kpFileInput.click());
+
+kpFileInput.addEventListener('change', async (e) => {
+  if (e.target.files.length > 0) {
+    await processSingleFile(e.target.files[0]);
+  }
+});
+
+async function processSingleFile(file) {
+  try {
+    const pack = await rifEngine.loadKnowledgePack(file);
+    kpTitle.textContent = pack.filename;
+    kpMeta.textContent = `${pack.metadata.tokenCount.toLocaleString()} Tokens · Bounded 6.3 MB Phase Index`;
+    
+    appendMessage('assistant', `✅ Loaded Knowledge Pack **"${pack.filename}"** into Kalpanā RIF memory. Context expanded to **${pack.metadata.tokenCount.toLocaleString()} Tokens** while memory stays bounded at **6.3 MB**!`);
+    updateRamDashboard();
+  } catch (err) {
+    alert(`Failed to load file: ${err.message}`);
+  }
+}
+
+/**
+ * Chat Messaging Handler
  */
 async function handleSend() {
   const text = userInput.value.trim();
@@ -94,15 +236,13 @@ async function handleSend() {
   userInput.value = '';
   sendBtn.disabled = true;
 
-  // Add User Message UI
   appendMessage('user', text);
   conversationHistory.push({ role: 'user', content: text });
 
-  // Update RIF Token Counter
-  rifEngine.addTokens(text.length / 4 + 100);
+  // Update RIF Token Capacity dynamically as chat grows
+  rifEngine.addTokens(Math.floor(text.length / 4) + 150);
   updateRamDashboard();
 
-  // Assistant Bubble Container
   const assistantBubble = appendMessage('assistant', '<i class="fa-solid fa-spinner fa-spin"></i> Processing with WebGPU + RIF...');
 
   try {
@@ -124,9 +264,6 @@ async function handleSend() {
   }
 }
 
-/**
- * Appends message to chat UI
- */
 function appendMessage(role, content) {
   const row = document.createElement('div');
   row.className = `message-row ${role}`;
@@ -152,67 +289,12 @@ function appendMessage(role, content) {
   return bubble;
 }
 
-/**
- * Knowledge Pack (.kp) File Drag and Drop Handlers
- */
-kpDropzone.addEventListener('click', () => kpFileInput.click());
-
-kpDropzone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  kpDropzone.classList.add('dragover');
-});
-
-kpDropzone.addEventListener('dragleave', () => {
-  kpDropzone.classList.remove('dragover');
-});
-
-kpDropzone.addEventListener('drop', async (e) => {
-  e.preventDefault();
-  kpDropzone.classList.remove('dragover');
-
-  const files = e.dataTransfer.files;
-  if (files.length > 0) {
-    await processKpFile(files[0]);
-  }
-});
-
-kpFileInput.addEventListener('change', async (e) => {
-  if (e.target.files.length > 0) {
-    await processKpFile(e.target.files[0]);
-  }
-});
-
-async function processKpFile(file) {
-  try {
-    const pack = await rifEngine.loadKnowledgePack(file);
-    kpTitle.textContent = pack.filename;
-    kpMeta.textContent = `${(pack.metadata.tokenCount / 1000000).toFixed(1)}M Tokens · Bounded 6.3 MB RIF State`;
-    
-    appendMessage('assistant', `✅ Successfully loaded Knowledge Pack **"${pack.filename}"** into Kalpanā RIF memory. Context expanded to **${(pack.metadata.tokenCount / 1000000).toFixed(1)} Million Tokens** while device memory stays bounded at **6.3 MB**!`);
-    updateRamDashboard();
-  } catch (err) {
-    alert(`Failed to load .kp file: ${err.message}`);
-  }
-}
-
-// Generate Sample .kp Button
-generateSampleBtn.addEventListener('click', () => {
-  const sample = rifEngine.generateSampleKp();
-  const url = URL.createObjectURL(sample.blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = sample.filename;
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-// Event Listeners
+// Listeners
 sendBtn.addEventListener('click', handleSend);
 userInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') handleSend();
 });
 
-// Helpers
 function escapeHtml(text) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -225,5 +307,4 @@ function formatMarkdown(text) {
     .replace(/\n/g, '<br>');
 }
 
-// Run App
 initApp();

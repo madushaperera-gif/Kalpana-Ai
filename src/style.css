@@ -126,6 +126,12 @@ body {
   font-weight: 700;
 }
 
+.capacity-sub {
+  font-size: 9px;
+  color: var(--accent-lime);
+  font-weight: 600;
+}
+
 .ram-value.qwen { color: var(--accent-blue); }
 .ram-value.rif { color: var(--accent-lime); }
 .ram-value.total { color: var(--accent-cyan); }
@@ -163,7 +169,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 16px;
-  gap: 16px;
+  gap: 14px;
 }
 
 .sidebar-title {
@@ -177,12 +183,35 @@ body {
   justify-content: space-between;
 }
 
+/* Multi-PDF Compiler Trigger Button */
+.compile-trigger-btn {
+  background: linear-gradient(135deg, rgba(222, 255, 154, 0.15), rgba(102, 242, 255, 0.15));
+  border: 1px solid var(--accent-lime);
+  color: var(--accent-lime);
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.compile-trigger-btn:hover {
+  background: linear-gradient(135deg, var(--accent-lime), var(--accent-cyan));
+  color: #000;
+  box-shadow: 0 0 15px rgba(222, 255, 154, 0.3);
+}
+
 /* Drag and Drop Zone for .kp files */
 .dropzone {
   border: 2px dashed var(--border-glow);
   background: rgba(102, 242, 255, 0.03);
   border-radius: 12px;
-  padding: 20px 16px;
+  padding: 16px 14px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -195,9 +224,9 @@ body {
 }
 
 .dropzone-icon {
-  font-size: 28px;
+  font-size: 24px;
   color: var(--accent-cyan);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .dropzone-text {
@@ -230,9 +259,10 @@ body {
 }
 
 .kp-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--accent-lime);
+  word-break: break-all;
 }
 
 .kp-badge {
@@ -370,19 +400,180 @@ body {
   transform: scale(0.97);
 }
 
-/* Responsive Rules for Mobile Devices */
+/* ── MULTI-PDF COMPILER MODAL STYLES ── */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(3, 7, 18, 0.8);
+  backdrop-filter: blur(10px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.compiler-modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-glow);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(102, 242, 255, 0.2);
+}
+
+.modal-header {
+  padding: 18px 20px;
+  background: rgba(15, 23, 42, 0.8);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.close-modal-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.close-modal-btn:hover {
+  color: var(--accent-rose);
+}
+
+.modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.multi-dropzone {
+  border: 2px dashed var(--accent-lime);
+  background: rgba(222, 255, 154, 0.03);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.multi-dropzone:hover {
+  background: rgba(222, 255, 154, 0.08);
+  box-shadow: 0 0 20px rgba(222, 255, 154, 0.2);
+}
+
+/* 3M Token Capacity Box */
+.token-capacity-box {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.capacity-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.capacity-bar-track {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.capacity-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-lime), var(--accent-cyan));
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.capacity-bar-fill.exceeded {
+  background: var(--accent-rose);
+}
+
+.capacity-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.file-list-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.selected-files-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.selected-file-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.file-item-name {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.file-item-tokens {
+  font-family: var(--font-mono);
+  color: var(--accent-lime);
+  font-size: 11px;
+}
+
+.modal-footer {
+  padding: 16px 20px;
+  background: rgba(15, 23, 42, 0.8);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Responsive Rules */
 @media (max-width: 768px) {
   .app-header {
     flex-direction: column;
     align-items: stretch;
   }
-  
   .ram-dashboard {
     flex-wrap: wrap;
     justify-content: space-around;
   }
-  
   .sidebar {
-    display: none; /* Collapsible on mobile */
+    display: none;
   }
 }
