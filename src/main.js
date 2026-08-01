@@ -123,37 +123,37 @@ async function initTelemetryMetrics() {
 
   if (isInstalledPwa || isOffline || !window.location.protocol.startsWith('http')) {
     if (onlineIndicator) onlineIndicator.innerHTML = '● OFFLINE APP';
-    const savedViews = localStorage.getItem('kalpana_views') || '14200';
-    const savedDownloads = localStorage.getItem('kalpana_downloads') || '4150';
+    const savedViews = localStorage.getItem('kalpana_views') || '1';
+    const savedDownloads = localStorage.getItem('kalpana_downloads') || '0';
     if (metricsViews) metricsViews.textContent = formatMetricNumber(parseInt(savedViews));
     if (metricsDownloads) metricsDownloads.textContent = formatMetricNumber(parseInt(savedDownloads));
+    if (metricsCountries) metricsCountries.textContent = '1+';
     return;
   }
 
-  let views = parseInt(localStorage.getItem('kalpana_views') || '14200');
-  let downloads = parseInt(localStorage.getItem('kalpana_downloads') || '4150');
+  let views = parseInt(localStorage.getItem('kalpana_views') || '1');
+  let downloads = parseInt(localStorage.getItem('kalpana_downloads') || '0');
 
-  // Real-time live view counter via public Counter API
+  // Real-time live view counter starting from true 1
   try {
     if (!sessionStorage.getItem('kalpana_page_viewed')) {
       views += 1;
       localStorage.setItem('kalpana_views', views.toString());
       sessionStorage.setItem('kalpana_page_viewed', 'true');
-      fetch('https://api.counterapi.dev/v1/kalpana-ai-maduperera/visits/up').catch(() => {});
     }
   } catch(e) {}
 
   if (metricsViews) metricsViews.textContent = formatMetricNumber(views);
   if (metricsDownloads) metricsDownloads.textContent = formatMetricNumber(downloads);
+  if (metricsCountries) metricsCountries.textContent = '1+';
 }
 
 function recordDownloadMetric() {
   const isInstalledPwa = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   if (!isInstalledPwa && window.location.protocol.startsWith('http')) {
-    let downloads = parseInt(localStorage.getItem('kalpana_downloads') || '4150') + 1;
+    let downloads = parseInt(localStorage.getItem('kalpana_downloads') || '0') + 1;
     localStorage.setItem('kalpana_downloads', downloads.toString());
     if (metricsDownloads) metricsDownloads.textContent = formatMetricNumber(downloads);
-    fetch('https://api.counterapi.dev/v1/kalpana-ai-maduperera/downloads/up').catch(() => {});
   }
 }
 
