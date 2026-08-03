@@ -146,51 +146,106 @@ if (closePrivacyModalConfirmBtn) {
 }
 
 /**
- * Real-time Online Page Metrics Counter
- * ZERO network calls executed once installed or offline!
+ * Global Community Metrics — Firebase Realtime Database
+ * 
+ * ONLINE (GitHub Pages): Fetches & increments global counters via Firebase RTDB REST API.
+ *   - No Firebase SDK needed — lightweight fetch() calls only.
+ *   - All visitors see the same real global counts.
+ * 
+ * OFFLINE / INSTALLED PWA: Shows last cached localStorage values.
+ *   - Makes ZERO network calls. Honors privacy disclaimer:
+ *     "Once downloaded, the app is completely offline and gathers no data."
  */
-async function initTelemetryMetrics() {
+const FIREBASE_RTDB_URL = 'https://kalpana-vijnana-default-rtdb.firebaseio.com';
+
+function isAppOfflineMode() {
   const isInstalledPwa = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   const isOffline = !navigator.onLine;
+  const isLocalFile = !window.location.protocol.startsWith('http');
+  return isInstalledPwa || isOffline || isLocalFile;
+}
 
-  if (isInstalledPwa || isOffline || !window.location.protocol.startsWith('http')) {
+async function initTelemetryMetrics() {
+  // OFFLINE / PWA MODE: Use cached values, make ZERO network calls
+  if (isAppOfflineMode()) {
     if (onlineIndicator) onlineIndicator.innerHTML = '● OFFLINE APP';
-    const savedViews = localStorage.getItem('kalpana_views') || '1';
-    const savedDownloads = localStorage.getItem('kalpana_downloads') || '0';
-    if (metricsViews) metricsViews.textContent = formatMetricNumber(parseInt(savedViews));
-    if (metricsDownloads) metricsDownloads.textContent = formatMetricNumber(parseInt(savedDownloads));
+    const cachedViews = localStorage.getItem('kalpana_views') || '0';
+    const cachedDownloads = localStorage.getItem('kalpana_downloads') || '0';
+    if (metricsViews) metricsViews.textContent = formatMetricNumber(parseInt(cachedViews));
+    if (metricsDownloads) metricsDownloads.textContent = formatMetricNumber(parseInt(cachedDownloads));
     if (metricsCountries) metricsCountries.textContent = '1+';
     return;
   }
 
-  let views = parseInt(localStorage.getItem('kalpana_views') || '1');
-  let downloads = parseInt(localStorage.getItem('kalpana_downloads') || '0');
-
-  // Real-time live view counter starting from true 1
+  // ONLINE MODE: Fetch global counts from Firebase RTDB
   try {
+    // Increment view count if this is a new session visit
     if (!sessionStorage.getItem('kalpana_page_viewed')) {
-      views += 1;
-      localStorage.setItem('kalpana_views', views.toString());
       sessionStorage.setItem('kalpana_page_viewed', 'true');
+      // Atomic increment via Firebase RTDB REST API
+      await fetch(`${FIREBASE_RTDB_URL}/metrics/views.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ '.sv': { 'increment': 1 } })
+      });
     }
-  } catch(e) {}
 
-  if (metricsViews) metricsViews.textContent = formatMetricNumber(views);
-  if (metricsDownloads) metricsDownloads.textContent = formatMetricNumber(downloads);
+    // Fetch current global totals
+    const res = await fetch(`${FIREBASE_RTDB_URL}/metrics.json`);
+    if (res.ok) {
+      const data = await res.json();
+      const globalViews = (data && data.views) || 0;
+      const globalDownloads = (data && data.downloads) || 0;
+
+      // Cache for offline/PWA mode
+      localStorage.setItem('kalpana_views', globalViews.toString());
+      localStorage.setItem('kalpana_downloads', globalDownloads.toString());
+
+      if (metricsViews) metricsViews.textContent = formatMetricNumber(globalViews);
+      if (metricsDownloads) metricsDownloads.textContent = formatMetricNumber(globalDownloads);
+      if (metricsCountries) metricsCountries.textContent = '1+';
+      return;
+    }
+  } catch (e) {
+    console.log('Metrics fetch failed, using cached values:', e.message);
+  }
+
+  // Fallback to cached localStorage if Firebase is unreachable
+  const fallbackViews = parseInt(localStorage.getItem('kalpana_views') || '0');
+  const fallbackDownloads = parseInt(localStorage.getItem('kalpana_downloads') || '0');
+  if (metricsViews) metricsViews.textContent = formatMetricNumber(fallbackViews);
+  if (metricsDownloads) metricsDownloads.textContent = formatMetricNumber(fallbackDownloads);
   if (metricsCountries) metricsCountries.textContent = '1+';
 }
 
-function recordDownloadMetric() {
-  const isInstalledPwa = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if (!isInstalledPwa && window.location.protocol.startsWith('http')) {
-    let downloads = parseInt(localStorage.getItem('kalpana_downloads') || '0') + 1;
-    localStorage.setItem('kalpana_downloads', downloads.toString());
-    if (metricsDownloads) metricsDownloads.textContent = formatMetricNumber(downloads);
+async function recordDownloadMetric() {
+  // NEVER make network calls in offline/PWA mode
+  if (isAppOfflineMode()) return;
+
+  try {
+    // Atomic increment download counter in Firebase
+    await fetch(`${FIREBASE_RTDB_URL}/metrics/downloads.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ '.sv': { 'increment': 1 } })
+    });
+
+    // Fetch updated total and display
+    const res = await fetch(`${FIREBASE_RTDB_URL}/metrics/downloads.json`);
+    if (res.ok) {
+      const downloads = await res.json();
+      localStorage.setItem('kalpana_downloads', (downloads || 0).toString());
+      if (metricsDownloads) metricsDownloads.textContent = formatMetricNumber(downloads || 0);
+    }
+  } catch (e) {
+    console.log('Download metric recording failed:', e.message);
   }
 }
 
 function formatMetricNumber(num) {
-  return num >= 1000 ? `${(num / 1000).toFixed(1)}K` : num.toString();
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num.toString();
 }
 
 // PWA Install Event Handler
