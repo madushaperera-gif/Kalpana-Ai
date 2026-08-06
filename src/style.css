@@ -205,6 +205,8 @@ body {
   flex-direction: column;
   padding: 16px;
   gap: 14px;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .sidebar-title {

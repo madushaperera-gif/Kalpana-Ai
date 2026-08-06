@@ -10,7 +10,30 @@ import { QwenWebGpuRunner } from './model-runner.js';
 
 // Initialize Engines
 const rifEngine = new KalpanaRifEngine({ bandwidth: 2048 });
-const modelRunner = new QwenWebGpuRunner();
+
+// Model loading state
+let modelLoadingBubble = null;
+
+const modelRunner = new QwenWebGpuRunner((progress) => {
+  // Update GPU info text with loading progress
+  const gpuInfoText = document.getElementById('gpuInfoText');
+  if (gpuInfoText) {
+    const pct = progress.progress ? Math.round(progress.progress * 100) : 0;
+    gpuInfoText.innerHTML = `⏳ <strong>Loading Qwen 0.5B:</strong> ${pct}% — ${progress.text || 'Downloading...'}`;
+  }
+  // Update the loading bubble in chat if it exists
+  if (modelLoadingBubble && progress.text) {
+    const pct = progress.progress ? Math.round(progress.progress * 100) : 0;
+    const barFill = Math.min(pct, 100);
+    modelLoadingBubble.innerHTML = `
+      <div style="margin-bottom:6px"><strong>⏳ Loading Qwen 0.5B on-device via WebGPU...</strong></div>
+      <div style="background:rgba(255,255,255,0.1);border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px">
+        <div style="background:linear-gradient(90deg,#66f2ff,#a6ff4d);height:100%;width:${barFill}%;transition:width 0.3s ease;border-radius:6px"></div>
+      </div>
+      <div style="font-size:11px;opacity:0.7">${pct}% — ${progress.text}</div>
+    `;
+  }
+});
 
 // DOM Elements — Header Dashboard
 const qwenRamVal = document.getElementById('qwenRamVal');
@@ -320,12 +343,42 @@ async function initApp() {
 
     const gpuStatus = await modelRunner.checkWebGpuSupport();
     if (gpuStatus.supported) {
-      gpuInfoText.innerHTML = `⚡ <strong>WebGPU Active:</strong> ${gpuStatus.adapterInfo.vendor || 'Local GPU'}`;
+      gpuInfoText.innerHTML = `⏳ <strong>WebGPU Active:</strong> ${gpuStatus.adapterInfo.vendor || 'Local GPU'} — Preparing model...`;
     } else {
-      gpuInfoText.innerHTML = `⚠️ <strong>WASM Fallback:</strong> ${gpuStatus.reason}`;
+      gpuInfoText.innerHTML = `⚠️ <strong>WebGPU Not Available:</strong> ${gpuStatus.reason}`;
     }
 
-    await modelRunner.loadModel();
+    // Show loading progress in chat
+    modelLoadingBubble = appendMessage('assistant', `
+      <div style="margin-bottom:6px"><strong>⏳ Loading Qwen 0.5B on-device via WebGPU...</strong></div>
+      <div style="background:rgba(255,255,255,0.1);border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px">
+        <div style="background:linear-gradient(90deg,#66f2ff,#a6ff4d);height:100%;width:0%;transition:width 0.3s ease;border-radius:6px"></div>
+      </div>
+      <div style="font-size:11px;opacity:0.7">Initializing download...</div>
+    `);
+
+    // Load model in background — DON'T await, let UI stay responsive
+    modelRunner.loadModel().then((result) => {
+      if (result.success) {
+        gpuInfoText.innerHTML = `⚡ <strong>WebGPU Active:</strong> Qwen 0.5B Ready`;
+        if (modelLoadingBubble) {
+          modelLoadingBubble.innerHTML = `✅ <strong>Qwen 0.5B loaded successfully!</strong> Running 100% locally on your device via WebGPU. Ask me anything or load a Knowledge Pack to chat with your documents.`;
+        }
+      } else {
+        gpuInfoText.innerHTML = `⚠️ <strong>Model Load Failed:</strong> ${result.error || 'Unknown error'}`;
+        if (modelLoadingBubble) {
+          modelLoadingBubble.innerHTML = `⚠️ <strong>Model failed to load:</strong> ${result.error || 'Unknown error'}. Try refreshing the page or use a WebGPU-compatible browser (Chrome/Edge).`;
+        }
+      }
+      updateRamDashboard();
+    }).catch((err) => {
+      console.error("Model loading error:", err);
+      gpuInfoText.innerHTML = `⚠️ <strong>Error:</strong> ${err.message}`;
+      if (modelLoadingBubble) {
+        modelLoadingBubble.innerHTML = `⚠️ <strong>Model failed to load:</strong> ${err.message}`;
+      }
+    });
+
     updateRamDashboard();
   } catch (err) {
     console.error("App startup initialization error:", err);
@@ -686,6 +739,9 @@ async function processSingleFile(file) {
 
 /**
  * Chat Messaging Handler (Form Submit & Click)
+ * Two-step visible pipeline:
+ *   1. RIF Resonant Context Retrieval (shown in chat)
+ *   2. Qwen 0.5B On-Device Inference (streamed in chat)
  */
 async function handleSend() {
   const rawText = userInput.value;
@@ -701,14 +757,40 @@ async function handleSend() {
   rifEngine.addTokens(Math.floor(text.length / 4) + 150);
   updateRamDashboard();
 
-  const assistantBubble = appendMessage('assistant', '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fa-spin"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Processing with WebGPU + RIF...');
+  // ─── Step 1: RIF Resonant Context Retrieval ───
+  let rifContext = '';
+  if (rifEngine.activePack) {
+    const rifStart = performance.now();
+    const docText = rifEngine.activePack.extractedText || '';
+    rifContext = rifEngine.retrieveResonantContext(text, docText);
+    const rifMs = (performance.now() - rifStart).toFixed(0);
+
+    if (rifContext && rifContext.length > 10) {
+      const contextPreview = rifContext.length > 500 ? rifContext.substring(0, 500) + '...' : rifContext;
+      appendMessage('assistant', `
+        <div style="border-left:3px solid #66f2ff;padding-left:10px;margin-bottom:8px">
+          <div style="font-size:11px;color:#66f2ff;font-weight:700;margin-bottom:4px">
+            🔍 RIF RETRIEVAL — ${rifMs}ms · ${rifContext.length} chars · Bandwidth: 2048
+          </div>
+          <div style="font-size:12px;opacity:0.85;line-height:1.5">${escapeHtml(contextPreview)}</div>
+        </div>
+      `);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  }
+
+  // ─── Step 2: Qwen 0.5B Inference ───
+  const assistantBubble = appendMessage('assistant', '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fa-spin"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Qwen 0.5B inference running on-device...');
+  const inferenceStart = performance.now();
 
   try {
     const responseText = await modelRunner.generateResponse(
       conversationHistory,
       (chunk) => {
         if (chunk && chunk.fullText) {
-          assistantBubble.innerHTML = formatMarkdown(chunk.fullText);
+          const elapsed = ((performance.now() - inferenceStart) / 1000).toFixed(1);
+          assistantBubble.innerHTML = formatMarkdown(chunk.fullText) +
+            `<div style="font-size:10px;opacity:0.5;margin-top:6px">⚡ ${chunk.tokens} tokens · ${chunk.tokPerSec} tok/s · ${elapsed}s</div>`;
           chatMessages.scrollTop = chatMessages.scrollHeight;
           updateRamDashboard();
         }
@@ -716,12 +798,14 @@ async function handleSend() {
       rifEngine
     );
 
-    if (responseText && (assistantBubble.innerHTML.includes('Processing') || assistantBubble.innerText.includes('Processing'))) {
+    const totalMs = ((performance.now() - inferenceStart) / 1000).toFixed(1);
+
+    if (responseText && (assistantBubble.innerHTML.includes('inference running') || assistantBubble.innerHTML.includes('fa-spin'))) {
       assistantBubble.innerHTML = formatMarkdown(responseText);
     }
 
     conversationHistory.push({ role: 'assistant', content: assistantBubble.innerText });
-    
+
     readResponseAloud(assistantBubble.innerText);
   } catch (err) {
     console.error("Inference execution error:", err);
