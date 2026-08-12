@@ -512,8 +512,8 @@
                             <div style="font-size: 9px; color: var(--text-muted);">per new token</div>
                         </div>
                         <div>
-                            <div style="font-size: 20px; font-weight: 900; color: var(--accent-rose);">~$0.50</div>
-                            <div style="font-size: 9px; color: var(--text-muted);">per 1M tokens</div>
+                            <div style="font-size: 20px; font-weight: 900; color: var(--accent-rose);">~$1.50</div>
+                            <div style="font-size: 9px; color: var(--text-muted);">per query @ 3M ctx</div>
                         </div>
                     </div>
                 </div>
@@ -530,13 +530,13 @@
                         </div>
                         <div>
                             <div style="font-size: 20px; font-weight: 900; color: var(--accent-lime);">$0.00</div>
-                            <div style="font-size: 9px; color: var(--accent-lime);">per 1M tokens</div>
+                            <div style="font-size: 9px; color: var(--accent-lime);">per query @ 3M ctx</div>
                         </div>
                     </div>
                 </div>
             </div>
             <div style="margin-top: 12px; font-size: 11px; color: var(--text-secondary); padding: 10px 12px; background: rgba(56,189,248,0.04); border-radius: 6px; line-height: 1.5;">
-                <strong style="color: var(--accent-cyan);">The Bottom Line:</strong> Traditional LLMs require <strong style="color: var(--accent-rose);">128 KB of VRAM</strong> for every single token and charge for cloud inference. Kalpanā RIF compresses memory overhead to <strong style="color: var(--accent-lime);">0 KB</strong>, allowing massive 3M token models to run on-device for <strong style="color: var(--accent-lime);">free</strong>.
+                <strong style="color: var(--accent-cyan);">The Bottom Line:</strong> At 3 million tokens, traditional APIs charge <strong style="color: var(--accent-rose);">~$1.50 every single time</strong> a user sends a message because the entire history must be re-processed. Kalpanā RIF runs locally on edge devices, meaning massive context models operate with <strong style="color: var(--accent-lime);">$0 marginal cost</strong> per message.
             </div>
         </div>
 
