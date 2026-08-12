@@ -11,7 +11,7 @@
 
 import { CreateMLCEngine } from "@mlc-ai/web-llm";
 
-const MODEL_LOAD_TIMEOUT_MS = 120000; // 2 minutes for model download + compile
+const MODEL_LOAD_TIMEOUT_MS = 180000; // 3 minutes for model download + compile
 const INFERENCE_TIMEOUT_MS = 30000;    // 30 seconds max per response
 
 export class QwenWebGpuRunner {
@@ -19,8 +19,8 @@ export class QwenWebGpuRunner {
     this.progressCallback = progressCallback;
     this.engine = null;
     this.isLoaded = false;
-    this.modelId = "SmolLM2-360M-Instruct-q4f16_1-MLC";
-    this.modelRamMb = 180.0;
+    this.modelId = "SmolLM2-135M-Instruct-q0f16-MLC";
+    this.modelRamMb = 90.0;
     this.webGpuSupported = false;
   }
 
@@ -44,7 +44,7 @@ export class QwenWebGpuRunner {
   }
 
   /**
-   * Load Qwen 0.5B into WebGPU Unified Memory via web-llm
+   * Load SmolLM2 135M into WebGPU Unified Memory via web-llm
    * Has a timeout — if loading takes too long, fails gracefully
    */
   async loadModel() {
@@ -65,7 +65,7 @@ export class QwenWebGpuRunner {
       });
 
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Model loading timed out after 2 minutes. Your device may not fully support WebGPU.")), MODEL_LOAD_TIMEOUT_MS)
+        setTimeout(() => reject(new Error("Model loading timed out after 3 minutes. Your device/browser may have restricted WebGPU memory.")), MODEL_LOAD_TIMEOUT_MS)
       );
 
       this.engine = await Promise.race([loadPromise, timeoutPromise]);
@@ -74,7 +74,7 @@ export class QwenWebGpuRunner {
       if (this.progressCallback) {
         this.progressCallback({
           progress: 1.0,
-          text: "Qwen 0.5B + Kalpanā RIF Ready on Local Hardware!",
+          text: "SmolLM2 135M + Kalpanā RIF Ready on Local Hardware!",
           timeElapsed: 0,
         });
       }
