@@ -6,7 +6,7 @@
 [![Patent](https://img.shields.io/badge/Patent-International_PCT_Pending-059669?style=for-the-badge)](https://github.com/madushaperera-gif/Kalpana-Ai)
 [![License](https://img.shields.io/badge/License-Business_Source_1.1-2563eb?style=for-the-badge)](LICENSE.md)
 
-> **Kalpanā** is a physics-derived AI engine that replaces the standard KV-Cache memory system with **Resonant Interference Fields (RIF)** — achieving O(1) constant memory regardless of conversation length. This app runs **Qwen 0.5B entirely on your device** via WebGPU, with zero cloud API calls, zero data leaving your browser.
+> **Kalpanā** is a physics-derived AI engine that replaces the standard KV-Cache memory system with **Resonant Interference Fields (RIF)** — achieving O(1) constant memory regardless of conversation length. This app runs **SmolLM2 135M entirely on your device** via WebGPU (ultra-lightweight ~90 MB footprint), with zero cloud API calls, zero data leaving your browser.
 
 ---
 
@@ -41,10 +41,10 @@ graph TB
     subgraph "Browser (100% Local Execution)"
         UI["Chat UI + Memory Dashboard<br>(main.js)"]
 
-        subgraph "Qwen 0.5B Inference Pipeline"
-            TOK["Tokenizer (BPE)<br>Text → Token IDs<br>~151K vocabulary"]
-            EMB["Embedding Layer<br>Token IDs → Dense Vectors<br>(1024-dim embeddings)"]
-            TF["Transformer Layers (×24)<br>Self-Attention: Q · K · V projections"]
+        subgraph "SmolLM2 135M Inference Pipeline"
+            TOK["Tokenizer (BPE)<br>Text → Token IDs"]
+            EMB["Embedding Layer<br>Token IDs → Dense Vectors"]
+            TF["Transformer Layers<br>Self-Attention: Q · K · V projections"]
             LOGITS["Output Head<br>Hidden States → Logits<br>→ Vocabulary Lookup → Text"]
         end
 
@@ -271,7 +271,7 @@ Kalpana-Ai/
 | File | Role | Connects to |
 |---|---|---|
 | **main.js** | Chat UI, memory dashboard, user interactions | Calls `model-runner.js` and `rif-engine.js` |
-| **model-runner.js** | Loads Qwen 0.5B, runs inference via WebGPU | Uses `rif-engine.js` for context retrieval |
+| **model-runner.js** | Loads SmolLM2 135M, runs inference via WebGPU | Uses `rif-engine.js` for context retrieval |
 | **rif-engine.js** | RIF core: bounded memory, KP compile/export | Called by `model-runner.js` during inference |
 | **base64-assets.js** | Embedded icons and media | Imported by `main.js` |
 | **style.css** | Dark theme, responsive layout | Loaded by `index.html` |
@@ -283,10 +283,9 @@ Kalpana-Ai/
 | Layer | Technology |
 |---|---|
 | **Framework** | Vite (vanilla JS, no React/Vue) |
-| **AI Model** | Qwen 1.5 0.5B Chat (INT4 quantized, ~151K BPE vocabulary) |
+| **AI Model** | SmolLM2 135M Instruct (Ultra-lightweight for mobile WebGPU) |
 | **Inference** | WebGPU + `@mlc-ai/web-llm` |
-| **Tokenizer** | BPE (Byte-Pair Encoding) via Qwen's vocabulary dictionary |
-| **Embeddings** | 1024-dimensional dense vectors (24 transformer layers × 16 heads) |
+| **Tokenizer** | BPE (Byte-Pair Encoding) |
 | **Memory Engine** | Kalpanā RIF (Resonant Interference Fields) — O(1) bounded state |
 | **Deployment** | GitHub Pages (static SPA) |
 | **Offline** | PWA-ready, zero cloud dependency |
@@ -297,11 +296,9 @@ Kalpana-Ai/
 
 | Component | RAM |
 |---|---|
-| Qwen 0.5B Model Weights (INT4) | 350.0 MB |
-| Embedding Matrix (151K × 1024) | Included in model weights |
-| Tokenizer Vocabulary | ~2 MB (dictionary lookup) |
+| SmolLM2 135M Model Weights | 90.0 MB |
 | Kalpanā RIF State (3M token capacity) | 6.3 MB |
-| **Total App Footprint** | **~358 MB** |
+| **Total App Footprint** | **~96.3 MB** |
 | Standard KV-Cache equivalent at 3M tokens | 1,450+ MB |
 | **Memory Saved** | **99.6%** |
 
