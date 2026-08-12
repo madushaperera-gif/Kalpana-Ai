@@ -125,26 +125,35 @@ let deferredPrompt = null;
 
 // Mobile Drawer Helpers
 function toggleMobileSidebar(e) {
-  if (e && e.stopPropagation) e.stopPropagation();
+  if (e) {
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+  }
   if (!appSidebar) return;
   appSidebar.classList.toggle('mobile-open');
   if (sidebarBackdrop) sidebarBackdrop.classList.toggle('active');
 }
 
 function closeMobileSidebar(e) {
-  if (e && e.stopPropagation) e.stopPropagation();
+  if (e) {
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+  }
   if (appSidebar) appSidebar.classList.remove('mobile-open');
   if (sidebarBackdrop) sidebarBackdrop.classList.remove('active');
 }
 
 if (hamburgerBtn) {
   hamburgerBtn.addEventListener('click', toggleMobileSidebar);
+  hamburgerBtn.addEventListener('touchstart', toggleMobileSidebar, { passive: false });
 }
 if (closeSidebarBtn) {
   closeSidebarBtn.addEventListener('click', closeMobileSidebar);
+  closeSidebarBtn.addEventListener('touchstart', closeMobileSidebar, { passive: false });
 }
 if (sidebarBackdrop) {
   sidebarBackdrop.addEventListener('click', closeMobileSidebar);
+  sidebarBackdrop.addEventListener('touchstart', closeMobileSidebar, { passive: false });
 }
 
 // Privacy Modal Handlers
@@ -840,6 +849,22 @@ function appendMessage(role, content) {
   chatMessages.appendChild(row);
   chatMessages.scrollTop = chatMessages.scrollHeight;
   return bubble;
+}
+
+if (sendBtn) {
+  sendBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    handleSend();
+  });
+}
+
+if (userInput) {
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  });
 }
 
 if (chatForm) {

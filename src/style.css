@@ -63,6 +63,14 @@ body {
   gap: 12px;
 }
 
+.brand-section img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .brand-icon {
   width: 36px;
   height: 36px;
@@ -864,7 +872,15 @@ body {
   .hamburger-btn {
     display: inline-flex;
     cursor: pointer;
-    z-index: 100;
+    z-index: 1200;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    width: 38px;
+    height: 38px;
+    padding: 8px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
   }
 
   .mobile-close-sidebar-btn {
