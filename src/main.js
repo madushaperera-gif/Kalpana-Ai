@@ -750,7 +750,7 @@ async function processSingleFile(file) {
  * Chat Messaging Handler (Form Submit & Click)
  * Two-step visible pipeline:
  *   1. RIF Resonant Context Retrieval (shown in chat)
- *   2. Qwen 0.5B On-Device Inference (streamed in chat)
+ *   2. SmolLM2 135M On-Device Inference (streamed in chat)
  */
 async function handleSend() {
   const rawText = userInput.value;

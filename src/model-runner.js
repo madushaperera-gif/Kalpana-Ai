@@ -1,5 +1,5 @@
 /**
- * Kalpanā AI — Local WebGPU Qwen 0.5B Model Runner
+ * Kalpanā AI — Local WebGPU SmolLM2 135M Model Runner
  * Real on-device inference via @mlc-ai/web-llm
  * Uses RIF Resonant Context Retrieval (constant 2048 token bandwidth)
  *
@@ -97,7 +97,7 @@ export class QwenWebGpuRunner {
   }
 
   /**
-   * Stream completion response using real Qwen 0.5B inference + RIF Context
+   * Stream completion response using real SmolLM2 135M inference + RIF Context
    * 30-second timeout — if inference hangs, returns RIF context directly
    */
   async generateResponse(messages, onChunk, rifEngine = null) {
@@ -257,7 +257,7 @@ export class QwenWebGpuRunner {
         response = "The Knowledge Pack is loaded but no relevant context was found for your query. Try rephrasing your question.";
       }
     } else {
-      response = "⏳ The Qwen 0.5B model is still loading (or failed to load). Once ready, I'll process your questions with full on-device inference.\n\nIn the meantime, you can load a Knowledge Pack (.kp) — I'll retrieve context from it immediately using the RIF engine.";
+      response = "⏳ The SmolLM2 135M model is still loading (or failed to load). Once ready, I'll process your questions with full on-device inference.\n\nIn the meantime, you can load a Knowledge Pack (.kp) — I'll retrieve context from it immediately using the RIF engine.";
     }
 
     if (typeof onChunk === "function") {
