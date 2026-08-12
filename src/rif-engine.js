@@ -14,7 +14,14 @@
  */
 
 const getPdfjsLib = () => {
-  return window.pdfjsLib || null;
+  const lib = window.pdfjsLib || null;
+  if (lib && lib.GlobalWorkerOptions) {
+    if (!lib.GlobalWorkerOptions.workerSrc) {
+      const baseUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) ? import.meta.env.BASE_URL : './';
+      lib.GlobalWorkerOptions.workerSrc = `${baseUrl}pdf.worker.min.js`;
+    }
+  }
+  return lib;
 };
 
 // ─── RIF State Geometry (from paper Section 5.1) ──────────
