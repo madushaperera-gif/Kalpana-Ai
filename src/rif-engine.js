@@ -103,8 +103,7 @@ export class KalpanaRifEngine {
   update(text) {
     if (!text || text.length < 2) return;
 
-    const sentences = text
-      .split(/(?<=[.!?\n])\s+/)
+    const sentences = (text.match(/[^.!?\n]+[.!?\n]*/g) || [])
       .map((s) => s.trim())
       .filter((s) => s.length > 5);
 
@@ -209,8 +208,7 @@ export class KalpanaRifEngine {
     if (cleanText.length < 50) return cleanText;
 
     const queryLower = query.toLowerCase();
-    const sentences = cleanText
-      .split(/(?<=[.!?])\s+/)
+    const sentences = (cleanText.match(/[^.!?]+[.!?]*/g) || [])
       .map((s) => s.trim())
       .filter((s) => s.length > 10);
 
