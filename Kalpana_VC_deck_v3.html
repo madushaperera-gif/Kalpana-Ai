@@ -493,38 +493,50 @@
             </table>
         </div>
 
-        <!-- Memory per Token Comparison -->
+        <!-- Memory & Cost per Token Comparison -->
         <div class="tile" style="padding: 16px 20px; margin-bottom: 0;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
                 <i class="fa-solid fa-microchip" style="color: var(--accent-cyan); font-size: 13px;"></i>
-                <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Memory Growth Per Token</span>
+                <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Memory Growth & Inference Cost</span>
             </div>
             <div style="display: flex; gap: 12px;">
                 <!-- Traditional -->
                 <div style="flex: 1; padding: 12px 14px; background: rgba(244,63,94,0.05); border-radius: 8px; border: 1px solid rgba(244,63,94,0.12); display: flex; align-items: center; justify-content: space-between;">
                     <div>
                         <div style="font-size: 10px; color: var(--accent-rose); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Traditional KV-Cache</div>
-                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Linear O(N) memory scaling</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Cloud API Inference</div>
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 24px; font-weight: 900; color: var(--accent-rose);">128 KB</div>
-                        <div style="font-size: 10px; color: var(--text-muted);">per new token</div>
+                    <div style="display: flex; gap: 16px; text-align: right;">
+                        <div>
+                            <div style="font-size: 20px; font-weight: 900; color: var(--accent-rose);">128 KB</div>
+                            <div style="font-size: 9px; color: var(--text-muted);">per new token</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 20px; font-weight: 900; color: var(--accent-rose);">~$0.50</div>
+                            <div style="font-size: 9px; color: var(--text-muted);">per 1M tokens</div>
+                        </div>
                     </div>
                 </div>
                 <!-- RIF -->
                 <div style="flex: 1; padding: 12px 14px; background: rgba(163,230,53,0.05); border-radius: 8px; border: 1px solid rgba(163,230,53,0.15); display: flex; align-items: center; justify-content: space-between;">
                     <div>
                         <div style="font-size: 10px; color: var(--accent-lime); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Kalpanā RIF</div>
-                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Constant O(1) memory bounds</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">100% Offline Edge</div>
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 24px; font-weight: 900; color: var(--accent-lime);">0 KB</div>
-                        <div style="font-size: 10px; color: var(--accent-lime);">per new token</div>
+                    <div style="display: flex; gap: 16px; text-align: right;">
+                        <div>
+                            <div style="font-size: 20px; font-weight: 900; color: var(--accent-lime);">0 KB</div>
+                            <div style="font-size: 9px; color: var(--accent-lime);">per new token</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 20px; font-weight: 900; color: var(--accent-lime);">$0.00</div>
+                            <div style="font-size: 9px; color: var(--accent-lime);">per 1M tokens</div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div style="margin-top: 12px; font-size: 11px; color: var(--text-secondary); padding: 10px 12px; background: rgba(56,189,248,0.04); border-radius: 6px; line-height: 1.5;">
-                <strong style="color: var(--accent-cyan);">The Bottom Line:</strong> Traditional LLMs like Llama-3 8B require <strong style="color: var(--accent-rose);">128 KB of new VRAM</strong> for every single token generated. Kalpanā RIF compresses state completely, requiring <strong style="color: var(--accent-lime);">0 KB of additional memory</strong> per new token, locking the total footprint at a flat 6.3 MB forever.
+                <strong style="color: var(--accent-cyan);">The Bottom Line:</strong> Traditional LLMs require <strong style="color: var(--accent-rose);">128 KB of VRAM</strong> for every single token and charge for cloud inference. Kalpanā RIF compresses memory overhead to <strong style="color: var(--accent-lime);">0 KB</strong>, allowing massive 3M token models to run on-device for <strong style="color: var(--accent-lime);">free</strong>.
             </div>
         </div>
 
