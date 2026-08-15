@@ -6,7 +6,7 @@
 
 import './style.css';
 import { KalpanaRifEngine } from './rif-engine.js';
-import { QwenWebGpuRunner } from './model-runner.js';
+import { SmolLmWebGpuRunner } from './model-runner.js';
 
 // Initialize Engines
 const rifEngine = new KalpanaRifEngine({ bandwidth: 2048 });
@@ -14,7 +14,7 @@ const rifEngine = new KalpanaRifEngine({ bandwidth: 2048 });
 // Model loading state
 let modelLoadingBubble = null;
 
-const modelRunner = new QwenWebGpuRunner((progress) => {
+const modelRunner = new SmolLmWebGpuRunner((progress) => {
   // Update GPU info text with loading progress
   const gpuInfoText = document.getElementById('gpuInfoText');
   if (gpuInfoText) {

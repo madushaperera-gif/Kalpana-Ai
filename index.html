@@ -116,7 +116,7 @@
           ⚡ 3M TOKENS 100% OFFLINE AI
         </div>
         <div style="font-size: 11px; color: var(--text-main); line-height: 1.5; margin-bottom: 8px;">
-          Try <strong>3M tokens</strong> context memory on mobile, laptop, or desktop — 100% offline Qwen 1.5 0.5B with <strong>6.3 MB RIF Memory</strong>.
+          Try <strong>3M tokens</strong> context memory on mobile, laptop, or desktop — 100% offline SmolLM2 135M with <strong>6.3 MB RIF Memory</strong>.
         </div>
         <div style="margin: 8px 0;">
           <a href="https://madushaperera-gif.github.io/Kalpana-Ai/" target="_blank" rel="noopener" style="display: block; background: rgba(102, 242, 255, 0.15); border: 1px solid var(--accent-cyan); color: #ffffff; padding: 7px 10px; border-radius: 6px; font-weight: 700; font-size: 12px; text-decoration: none; word-break: break-all; transition: all 0.2s ease;">
@@ -156,9 +156,9 @@
       <!-- Drag and Drop Dropzone -->
       <div class="dropzone" id="kpDropzone">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropzone-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <div class="dropzone-text">Drop .kp or PDF File Here</div>
+        <div class="dropzone-text">Drop Knowledge Pack (.kp) File Here</div>
         <div class="dropzone-subtext">or click to browse local files</div>
-        <input type="file" id="kpFileInput" accept=".kp,.pdf,.txt,.md" style="display: none;" />
+        <input type="file" id="kpFileInput" accept=".kp" style="display: none;" />
       </div>
 
       <!-- Active Knowledge Pack Display (Hidden by default until pack is loaded) -->
@@ -182,7 +182,7 @@
       </button>
 
       <div style="font-size: 11px; color: var(--text-muted); line-height: 1.6; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
-        <div><strong>Model:</strong> Qwen 1.5 0.5B (INT4)</div>
+        <div><strong>Model:</strong> SmolLM2 135M (q0f16)</div>
         <div><strong>Execution:</strong> WebGPU / Local Shaders</div>
         <div><strong>RIF Limit:</strong> 3 Million Tokens (O(1) Bounded)</div>
         <div id="gpuInfoText" style="color: var(--accent-cyan); margin-top: 4px;">Detecting WebGPU Hardware...</div>

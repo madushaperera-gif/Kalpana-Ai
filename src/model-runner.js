@@ -14,7 +14,7 @@ import { CreateMLCEngine } from "@mlc-ai/web-llm";
 const MODEL_LOAD_TIMEOUT_MS = 180000; // 3 minutes for model download + compile
 const INFERENCE_TIMEOUT_MS = 30000;    // 30 seconds max per response
 
-export class QwenWebGpuRunner {
+export class SmolLmWebGpuRunner {
   constructor(progressCallback = null) {
     this.progressCallback = progressCallback;
     this.engine = null;
