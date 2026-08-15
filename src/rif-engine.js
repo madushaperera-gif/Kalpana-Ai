@@ -337,6 +337,14 @@ export class KalpanaRifEngine {
     const packTitle = title || `Kalpana_KP_${dateStr}`;
     const filename = packTitle.endsWith(".kp") ? packTitle : `${packTitle}.kp`;
 
+    // Encode conversation history into RIF state if provided
+    if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+      const chatText = conversationHistory
+        .map((msg) => `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`)
+        .join("\n");
+      this.update(chatText);
+    }
+
     const headerJson = JSON.stringify({
       v: "1.0",
       type: "kalpana_rif_state",
@@ -355,11 +363,19 @@ export class KalpanaRifEngine {
     headerPadded.set(headerRaw.slice(0, HEADER_BYTES));
 
     // Sentence cache — store only text strings (embeddings recomputed on load)
-    const cacheSentences = this.sentenceCache.map((e) => e.sentence || e);
-    const cacheJson = JSON.stringify(cacheSentences);
-    const cacheRaw = encoder.encode(cacheJson);
+    let cacheSentences = this.sentenceCache.map((e) => e.sentence || e);
+    let cacheJson = JSON.stringify(cacheSentences);
+    let cacheRaw = encoder.encode(cacheJson);
+
+    // Ensure cache JSON fits into CACHE_BYTES cleanly without string truncation breaking syntax
+    while (cacheRaw.length > CACHE_BYTES && cacheSentences.length > 0) {
+      cacheSentences.pop();
+      cacheJson = JSON.stringify(cacheSentences);
+      cacheRaw = encoder.encode(cacheJson);
+    }
+
     const cachePadded = new Uint8Array(CACHE_BYTES);
-    cachePadded.set(cacheRaw.slice(0, CACHE_BYTES));
+    cachePadded.set(cacheRaw);
 
     // Assemble: header + state_re + state_im + cache
     const blob = new Blob(

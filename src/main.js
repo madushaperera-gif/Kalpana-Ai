@@ -763,14 +763,16 @@ async function handleSend() {
   appendMessage('user', text);
   conversationHistory.push({ role: 'user', content: text });
 
+  // Update live RIF state memory with user input
+  rifEngine.update(text);
   rifEngine.addTokens(Math.floor(text.length / 4) + 150);
   updateRamDashboard();
 
   // ─── Step 1: RIF Resonant Context Retrieval ───
   let rifContext = '';
-  if (rifEngine.activePack) {
+  if (rifEngine.activePack || rifEngine.sentenceCache.length > 0) {
     const rifStart = performance.now();
-    const docText = rifEngine.activePack.extractedText || '';
+    const docText = rifEngine.activePack ? (rifEngine.activePack.extractedText || '') : '';
     rifContext = rifEngine.retrieveResonantContext(text, docText);
     const rifMs = (performance.now() - rifStart).toFixed(0);
 
@@ -813,9 +815,11 @@ async function handleSend() {
       assistantBubble.innerHTML = formatMarkdown(responseText);
     }
 
-    conversationHistory.push({ role: 'assistant', content: assistantBubble.innerText });
+    const finalAnswer = responseText || assistantBubble.innerText;
+    conversationHistory.push({ role: 'assistant', content: finalAnswer });
+    rifEngine.update(finalAnswer);
 
-    readResponseAloud(assistantBubble.innerText);
+    readResponseAloud(finalAnswer);
   } catch (err) {
     console.error("Inference execution error:", err);
     assistantBubble.innerHTML = `<span style="color: var(--accent-rose);">Error: ${err.message}</span>`;
