@@ -817,7 +817,6 @@ async function handleSend() {
 
     const finalAnswer = responseText || assistantBubble.innerText;
     conversationHistory.push({ role: 'assistant', content: finalAnswer });
-    rifEngine.update(finalAnswer);
 
     readResponseAloud(finalAnswer);
   } catch (err) {

@@ -122,25 +122,18 @@ export class QwenWebGpuRunner {
     const chatMessages = [];
 
     // System prompt with optional RIF context
-    let systemPrompt = "You are Kalpanā AI, a helpful assistant. Answer questions accurately and concisely based on the provided context.";
+    let systemPrompt = "You are Kalpanā AI, an accurate on-device assistant.";
 
-    // If a Knowledge Pack is loaded, inject its context via RIF retrieval
-    if (rifEngine && rifEngine.activePack) {
-      const packName = rifEngine.activePack.filename || "Knowledge Pack";
-      const docContext = rifEngine.activePack.extractedText || "";
-
-      let resonantContext = "";
-      if (docContext && typeof rifEngine.retrieveResonantContext === "function") {
-        const lastUserMsg = messages.length > 0 ? messages[messages.length - 1].content : "";
-        resonantContext = rifEngine.retrieveResonantContext(lastUserMsg, docContext);
-      } else if (docContext) {
-        resonantContext = docContext.substring(0, 1024);
-      }
+    // Inject context via RIF retrieval whenever RIF engine is provided
+    if (rifEngine && typeof rifEngine.retrieveResonantContext === "function") {
+      const lastUserMsg = messages.length > 0 ? messages[messages.length - 1].content : "";
+      const docContext = rifEngine.activePack ? (rifEngine.activePack.extractedText || "") : "";
+      const resonantContext = rifEngine.retrieveResonantContext(lastUserMsg, docContext);
 
       if (resonantContext && resonantContext.length > 10) {
         // Truncate context to fit in small model's window
-        const truncated = resonantContext.substring(0, 800);
-        systemPrompt += `\n\nAnswer based on this document context:\n${truncated}`;
+        const truncated = resonantContext.substring(0, 1000);
+        systemPrompt += `\n\n[CONTEXT KNOWLEDGE]:\n${truncated}\n\nInstructions: Answer the user's question accurately based on the [CONTEXT KNOWLEDGE] above.`;
       }
     }
 
