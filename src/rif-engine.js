@@ -179,12 +179,12 @@ export class KalpanaRifEngine {
 
       scored.sort((a, b) => b.score - a.score);
 
-      // Collect top sentences up to bandwidth limit
+      // Collect top sentences up to bandwidth limit (minimum relevance score threshold)
       let context = "";
       for (const item of scored) {
-        if (context.length + item.sentence.length < this.bandwidth) {
+        if (item.score > 0.05 && (context.length + item.sentence.length < this.bandwidth)) {
           context += item.sentence + " ";
-        } else {
+        } else if (item.score <= 0.05) {
           break;
         }
       }

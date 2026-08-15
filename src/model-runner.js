@@ -133,7 +133,7 @@ export class QwenWebGpuRunner {
       if (resonantContext && resonantContext.length > 10) {
         // Truncate context to fit in small model's window
         const truncated = resonantContext.substring(0, 1000);
-        systemPrompt += `\n\n[CONTEXT KNOWLEDGE]:\n${truncated}\n\nInstructions: Answer the user's question accurately based on the [CONTEXT KNOWLEDGE] above.`;
+        systemPrompt += `\n\n[RETRIEVED KNOWLEDGE CONTEXT]:\n${truncated}\n\nInstructions: Answer the user's question accurately. If the [RETRIEVED KNOWLEDGE CONTEXT] is relevant, use it as primary context. If the question asks for general knowledge not covered in the context, answer using your general knowledge.`;
       }
     }
 
