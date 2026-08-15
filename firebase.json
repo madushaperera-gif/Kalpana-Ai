@@ -5,13 +5,6 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ],
-    "redirects": [
-      {
-        "source": "**",
-        "destination": "https://madushaperera-gif.github.io/Kalpana-Ai/",
-        "type": 301
-      }
     ]
   }
 }
